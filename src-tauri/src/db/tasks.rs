@@ -1,0 +1,176 @@
+use rusqlite::{params, Row};
+use serde::{Deserialize, Serialize};
+
+use crate::db::{DbPool, DbResult};
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Task {
+    pub id: i64,
+    pub title: String,
+    pub description: Option<String>,
+    pub project_id: Option<i64>,
+    pub assignee: Option<String>,
+    pub priority: String,
+    pub status: String,
+    pub due_date: Option<String>,
+    pub estimated_hours: Option<f64>,
+    pub actual_hours: Option<f64>,
+    pub tags: Option<String>,
+    pub created_at: String,
+    pub completed_at: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateTaskPayload {
+    pub title: String,
+    pub description: Option<String>,
+    pub project_id: Option<i64>,
+    pub assignee: Option<String>,
+    pub priority: Option<String>,
+    pub status: Option<String>,
+    pub due_date: Option<String>,
+    pub estimated_hours: Option<f64>,
+    pub tags: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateTaskPayload {
+    pub title: Option<String>,
+    pub description: Option<String>,
+    pub project_id: Option<i64>,
+    pub assignee: Option<String>,
+    pub priority: Option<String>,
+    pub status: Option<String>,
+    pub due_date: Option<String>,
+    pub estimated_hours: Option<f64>,
+    pub actual_hours: Option<f64>,
+    pub tags: Option<String>,
+    pub completed_at: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct TaskStats {
+    pub total: i64,
+    pub done: i64,
+    pub in_progress: i64,
+    pub todo: i64,
+    pub overdue: i64,
+}
+
+const SELECT_COLS: &str = "id, title, description, project_id, assignee, priority, status, due_date, estimated_hours, actual_hours, tags, created_at, completed_at";
+
+fn map_row(row: &Row) -> rusqlite::Result<Task> {
+    Ok(Task {
+        id: row.get(0)?,
+        title: row.get(1)?,
+        description: row.get(2)?,
+        project_id: row.get(3)?,
+        assignee: row.get(4)?,
+        priority: row.get(5)?,
+        status: row.get(6)?,
+        due_date: row.get(7)?,
+        estimated_hours: row.get(8)?,
+        actual_hours: row.get(9)?,
+        tags: row.get(10)?,
+        created_at: row.get(11)?,
+        completed_at: row.get(12)?,
+    })
+}
+
+pub fn get_all(pool: &DbPool, status_filter: Option<String>) -> DbResult<Vec<Task>> {
+    let conn = pool.get()?;
+    let sql = if status_filter.is_some() {
+        format!("SELECT {SELECT_COLS} FROM tasks WHERE status = ?1 ORDER BY due_date ASC, created_at DESC")
+    } else {
+        format!("SELECT {SELECT_COLS} FROM tasks ORDER BY due_date ASC, created_at DESC")
+    };
+    let mut stmt = conn.prepare(&sql)?;
+    let tasks = if let Some(s) = status_filter {
+        stmt.query_map(params![s], map_row)?
+            .collect::<rusqlite::Result<Vec<_>>>()?
+    } else {
+        stmt.query_map([], map_row)?
+            .collect::<rusqlite::Result<Vec<_>>>()?
+    };
+    Ok(tasks)
+}
+
+pub fn create(pool: &DbPool, payload: CreateTaskPayload) -> DbResult<Task> {
+    let conn = pool.get()?;
+    conn.execute(
+        "INSERT INTO tasks (title, description, project_id, assignee, priority, status, due_date, estimated_hours, tags)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+        params![
+            payload.title,
+            payload.description,
+            payload.project_id,
+            payload.assignee,
+            payload.priority.unwrap_or_else(|| "P2".to_string()),
+            payload.status.unwrap_or_else(|| "todo".to_string()),
+            payload.due_date,
+            payload.estimated_hours,
+            payload.tags,
+        ],
+    )?;
+    let id = conn.last_insert_rowid();
+    let sql = format!("SELECT {SELECT_COLS} FROM tasks WHERE id = ?1");
+    let mut stmt = conn.prepare(&sql)?;
+    Ok(stmt.query_row(params![id], map_row)?)
+}
+
+pub fn update(pool: &DbPool, id: i64, p: UpdateTaskPayload) -> DbResult<Task> {
+    let conn = pool.get()?;
+    // COALESCE keeps existing value when argument is NULL; for optional text fields we allow explicit NULL via direct assignment
+    conn.execute(
+        "UPDATE tasks SET
+           title            = COALESCE(?1, title),
+           description      = ?2,
+           project_id       = ?3,
+           assignee         = ?4,
+           priority         = COALESCE(?5, priority),
+           status           = COALESCE(?6, status),
+           due_date         = ?7,
+           estimated_hours  = ?8,
+           actual_hours     = ?9,
+           tags             = ?10,
+           completed_at     = ?11
+         WHERE id = ?12",
+        params![
+            p.title,
+            p.description,
+            p.project_id,
+            p.assignee,
+            p.priority,
+            p.status,
+            p.due_date,
+            p.estimated_hours,
+            p.actual_hours,
+            p.tags,
+            p.completed_at,
+            id,
+        ],
+    )?;
+    let sql = format!("SELECT {SELECT_COLS} FROM tasks WHERE id = ?1");
+    let mut stmt = conn.prepare(&sql)?;
+    Ok(stmt.query_row(params![id], map_row)?)
+}
+
+pub fn delete(pool: &DbPool, id: i64) -> DbResult<()> {
+    let conn = pool.get()?;
+    conn.execute("DELETE FROM tasks WHERE id = ?1", params![id])?;
+    Ok(())
+}
+
+pub fn stats(pool: &DbPool) -> DbResult<TaskStats> {
+    let conn = pool.get()?;
+    let total: i64 = conn.query_row("SELECT COUNT(*) FROM tasks", [], |r| r.get(0))?;
+    let done: i64 = conn.query_row("SELECT COUNT(*) FROM tasks WHERE status = 'done'", [], |r| r.get(0))?;
+    let in_progress: i64 = conn.query_row("SELECT COUNT(*) FROM tasks WHERE status = 'in_progress'", [], |r| r.get(0))?;
+    let todo: i64 = conn.query_row("SELECT COUNT(*) FROM tasks WHERE status = 'todo'", [], |r| r.get(0))?;
+    let overdue: i64 = conn.query_row(
+        "SELECT COUNT(*) FROM tasks WHERE status NOT IN ('done') AND due_date < date('now')",
+        [],
+        |r| r.get(0),
+    )?;
+    Ok(TaskStats { total, done, in_progress, todo, overdue })
+}

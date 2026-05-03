@@ -1,0 +1,10 @@
+{
+  "identifier": "default",
+  "description": "Default capabilities for PM System",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "core:path:default",
+    "shell:allow-open"
+  ]
+}

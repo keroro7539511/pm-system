@@ -1,0 +1,27 @@
+node_modules
+dist
+dist-ssr
+*.local
+
+# Tauri
+src-tauri/target
+src-tauri/gen
+
+# SQLite
+*.db
+*.db-shm
+*.db-wal
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Editor
+.DS_Store
+.vscode/settings.json
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

@@ -1,0 +1,72 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: #0A0E1A;
+    --foreground: #ffffff;
+    --card: rgba(255, 255, 255, 0.04);
+    --card-border: rgba(255, 255, 255, 0.08);
+    --primary: #3B82F6;
+    --primary-foreground: #ffffff;
+    --muted: rgba(255, 255, 255, 0.06);
+    --muted-foreground: rgba(255, 255, 255, 0.4);
+    --border: rgba(255, 255, 255, 0.08);
+    --input: rgba(255, 255, 255, 0.06);
+    --ring: #3B82F6;
+    --radius: 0.625rem;
+  }
+
+  * {
+    @apply border-border;
+    box-sizing: border-box;
+  }
+
+  html {
+    @apply bg-background text-text-primary;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-background text-text-primary font-sans;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* Allow text selection in inputs and content areas */
+  input, textarea, [contenteditable] {
+    user-select: text;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.25);
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-card-bg border border-border rounded-lg;
+  }
+
+  .nav-item {
+    @apply flex items-center gap-3 px-3 py-2 rounded-md text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors cursor-pointer text-sm font-medium;
+  }
+
+  .nav-item-active {
+    @apply text-text-primary bg-primary/10 border border-primary/20;
+  }
+}

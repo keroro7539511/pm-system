@@ -1,0 +1,121 @@
+{
+  "nav": {
+    "dashboard": "儀表板",
+    "tasks": "任務管理",
+    "emails": "客戶信件",
+    "calendar": "行事曆",
+    "reports": "報表",
+    "documents": "文件庫",
+    "settings": "設定"
+  },
+  "dashboard": {
+    "title": "儀表板",
+    "kpi": {
+      "totalTasks": "總任務數",
+      "doneTasks": "已完成",
+      "inProgress": "進行中",
+      "overdue": "已逾期"
+    },
+    "charts": {
+      "taskTrend": "任務完成趨勢（近12週）",
+      "statusDist": "任務狀態分佈",
+      "projectProgress": "專案進度"
+    },
+    "weekCompare": "較上週"
+  },
+  "tasks": {
+    "title": "任務管理",
+    "newTask": "新增任務",
+    "editTask": "編輯任務",
+    "deleteTask": "刪除任務",
+    "deleteConfirm": "確定要刪除此任務？此操作無法復原。",
+    "listView": "列表",
+    "kanbanView": "看板",
+    "fields": {
+      "title": "任務名稱",
+      "description": "說明",
+      "project": "專案",
+      "assignee": "負責人",
+      "priority": "優先度",
+      "status": "狀態",
+      "dueDate": "截止日期",
+      "estimatedHours": "預估工時（小時）",
+      "tags": "標籤"
+    },
+    "priority": {
+      "P0": "緊急",
+      "P1": "高",
+      "P2": "中",
+      "P3": "低"
+    },
+    "status": {
+      "todo": "待辦",
+      "in_progress": "進行中",
+      "review": "審核中",
+      "done": "已完成",
+      "overdue": "已逾期"
+    },
+    "empty": "目前沒有任務",
+    "emptyDesc": "點擊「新增任務」開始建立你的第一個任務"
+  },
+  "projects": {
+    "title": "專案",
+    "noProject": "未指定專案",
+    "status": {
+      "active": "進行中",
+      "paused": "暫停",
+      "completed": "已完成"
+    }
+  },
+  "settings": {
+    "title": "設定",
+    "n8n": {
+      "title": "n8n 整合",
+      "webhookUrl": "Webhook URL",
+      "webhookUrlPlaceholder": "http://localhost:5678/webhook/xxx",
+      "localPort": "本機監聽 Port",
+      "hmacSecret": "HMAC Secret",
+      "testConnection": "測試連線",
+      "testing": "測試中...",
+      "testSuccess": "連線成功",
+      "testFailed": "連線失敗"
+    },
+    "notifications": {
+      "title": "通知設定",
+      "enabled": "啟用系統通知"
+    },
+    "appearance": {
+      "title": "外觀",
+      "theme": "主題",
+      "language": "語言",
+      "themes": {
+        "dark": "深色",
+        "light": "淺色",
+        "system": "跟隨系統"
+      }
+    },
+    "about": {
+      "title": "關於",
+      "version": "版本",
+      "author": "作者"
+    },
+    "save": "儲存設定",
+    "saved": "已儲存",
+    "saveError": "儲存失敗"
+  },
+  "common": {
+    "loading": "載入中...",
+    "error": "發生錯誤",
+    "retry": "重試",
+    "cancel": "取消",
+    "confirm": "確認",
+    "save": "儲存",
+    "delete": "刪除",
+    "edit": "編輯",
+    "create": "建立",
+    "search": "搜尋",
+    "noData": "無資料",
+    "comingSoon": "功能開發中",
+    "comingSoonDesc": "此功能將在 Phase 2 推出，敬請期待！"
+  }
+}

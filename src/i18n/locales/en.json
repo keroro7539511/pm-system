@@ -1,0 +1,121 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "tasks": "Tasks",
+    "emails": "Emails",
+    "calendar": "Calendar",
+    "reports": "Reports",
+    "documents": "Documents",
+    "settings": "Settings"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "kpi": {
+      "totalTasks": "Total Tasks",
+      "doneTasks": "Completed",
+      "inProgress": "In Progress",
+      "overdue": "Overdue"
+    },
+    "charts": {
+      "taskTrend": "Task Completion Trend (12 Weeks)",
+      "statusDist": "Task Status Distribution",
+      "projectProgress": "Project Progress"
+    },
+    "weekCompare": "vs last week"
+  },
+  "tasks": {
+    "title": "Tasks",
+    "newTask": "New Task",
+    "editTask": "Edit Task",
+    "deleteTask": "Delete Task",
+    "deleteConfirm": "Are you sure you want to delete this task? This action cannot be undone.",
+    "listView": "List",
+    "kanbanView": "Kanban",
+    "fields": {
+      "title": "Task Title",
+      "description": "Description",
+      "project": "Project",
+      "assignee": "Assignee",
+      "priority": "Priority",
+      "status": "Status",
+      "dueDate": "Due Date",
+      "estimatedHours": "Estimated Hours",
+      "tags": "Tags"
+    },
+    "priority": {
+      "P0": "Critical",
+      "P1": "High",
+      "P2": "Medium",
+      "P3": "Low"
+    },
+    "status": {
+      "todo": "To Do",
+      "in_progress": "In Progress",
+      "review": "In Review",
+      "done": "Done",
+      "overdue": "Overdue"
+    },
+    "empty": "No tasks yet",
+    "emptyDesc": "Click \"New Task\" to create your first task"
+  },
+  "projects": {
+    "title": "Projects",
+    "noProject": "No Project",
+    "status": {
+      "active": "Active",
+      "paused": "Paused",
+      "completed": "Completed"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "n8n": {
+      "title": "n8n Integration",
+      "webhookUrl": "Webhook URL",
+      "webhookUrlPlaceholder": "http://localhost:5678/webhook/xxx",
+      "localPort": "Local Listen Port",
+      "hmacSecret": "HMAC Secret",
+      "testConnection": "Test Connection",
+      "testing": "Testing...",
+      "testSuccess": "Connection successful",
+      "testFailed": "Connection failed"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "enabled": "Enable System Notifications"
+    },
+    "appearance": {
+      "title": "Appearance",
+      "theme": "Theme",
+      "language": "Language",
+      "themes": {
+        "dark": "Dark",
+        "light": "Light",
+        "system": "System"
+      }
+    },
+    "about": {
+      "title": "About",
+      "version": "Version",
+      "author": "Author"
+    },
+    "save": "Save Settings",
+    "saved": "Saved",
+    "saveError": "Save failed"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "noData": "No data",
+    "comingSoon": "Coming Soon",
+    "comingSoonDesc": "This feature will be available in Phase 2. Stay tuned!"
+  }
+}
