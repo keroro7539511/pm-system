@@ -1,5 +1,7 @@
 export * from "./task";
 export * from "./project";
+export * from "./client";
+export * from "./email";
 
 export interface AppSettings {
   n8n_webhook_url: string;

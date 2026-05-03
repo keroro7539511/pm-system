@@ -2,6 +2,8 @@ use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
 use tauri::Manager;
 
+pub mod clients;
+pub mod emails;
 pub mod migrations;
 pub mod projects;
 pub mod tasks;

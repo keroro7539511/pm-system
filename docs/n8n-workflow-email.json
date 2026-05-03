@@ -1,0 +1,109 @@
+{
+  "name": "PM System — Gmail to Desktop",
+  "description": "監聽 Gmail 新信件，透過 OpenAI 產生摘要和分類，推送到 PM System 本機 webhook",
+  "nodes": [
+    {
+      "id": "1",
+      "name": "Gmail Trigger",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "parameters": {
+        "pollTimes": { "item": [{ "mode": "everyMinute" }] },
+        "filters": {},
+        "options": {}
+      },
+      "position": [100, 300]
+    },
+    {
+      "id": "2",
+      "name": "OpenAI Summarize",
+      "type": "n8n-nodes-base.openAi",
+      "parameters": {
+        "resource": "chat",
+        "model": "gpt-4o-mini",
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "你是一個 PM 助理。請用 2-3 句話摘要這封信的重點，並判斷分類（requirement/issue/report/other）。回傳 JSON: { \"summary\": \"...\", \"category\": \"...\" }"
+            },
+            {
+              "role": "user",
+              "content": "=主旨：{{ $json.subject }}\n\n內容：{{ $json.text }}"
+            }
+          ]
+        },
+        "options": { "responseFormat": "json_object" }
+      },
+      "position": [350, 300]
+    },
+    {
+      "id": "3",
+      "name": "Parse AI Response",
+      "type": "n8n-nodes-base.set",
+      "parameters": {
+        "values": {
+          "string": [
+            { "name": "gmail_id", "value": "={{ $('Gmail Trigger').item.json.id }}" },
+            { "name": "subject", "value": "={{ $('Gmail Trigger').item.json.subject }}" },
+            { "name": "sender", "value": "={{ $('Gmail Trigger').item.json.from[0].address }}" },
+            { "name": "body", "value": "={{ $('Gmail Trigger').item.json.text }}" },
+            { "name": "ai_summary", "value": "={{ JSON.parse($json.choices[0].message.content).summary }}" },
+            { "name": "category", "value": "={{ JSON.parse($json.choices[0].message.content).category }}" },
+            { "name": "received_at", "value": "={{ $('Gmail Trigger').item.json.date }}" }
+          ]
+        }
+      },
+      "position": [600, 300]
+    },
+    {
+      "id": "4",
+      "name": "Send to PM System",
+      "type": "n8n-nodes-base.httpRequest",
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:54321/webhook/email-received",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-Webhook-Secret",
+              "value": "={{$env.PM_SYSTEM_WEBHOOK_SECRET}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "gmail_id",    "value": "={{ $json.gmail_id }}" },
+            { "name": "subject",     "value": "={{ $json.subject }}" },
+            { "name": "sender",      "value": "={{ $json.sender }}" },
+            { "name": "body",        "value": "={{ $json.body }}" },
+            { "name": "ai_summary",  "value": "={{ $json.ai_summary }}" },
+            { "name": "category",    "value": "={{ $json.category }}" },
+            { "name": "received_at", "value": "={{ $json.received_at }}" }
+          ]
+        }
+      },
+      "position": [850, 300]
+    }
+  ],
+  "connections": {
+    "Gmail Trigger": { "main": [[{ "node": "OpenAI Summarize", "type": "main", "index": 0 }]] },
+    "OpenAI Summarize": { "main": [[{ "node": "Parse AI Response", "type": "main", "index": 0 }]] },
+    "Parse AI Response": { "main": [[{ "node": "Send to PM System", "type": "main", "index": 0 }]] }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "_setup_notes": [
+    "1. 在 n8n 設定 Gmail OAuth 憑證",
+    "2. 設定 OpenAI API Key",
+    "3. 新增環境變數 PM_SYSTEM_WEBHOOK_SECRET（與 PM System 設定頁的 HMAC Secret 相同）",
+    "4. 確認 PM System 正在執行（webhook server 監聽 localhost:54321）",
+    "5. 啟動此工作流，每分鐘會自動檢查新信件"
+  ]
+}

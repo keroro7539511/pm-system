@@ -28,6 +28,20 @@ impl Default for AppSettings {
     }
 }
 
+pub fn load_settings_sync(app: &tauri::AppHandle) -> AppSettings {
+    let path = match config_path(app) {
+        Ok(p) => p,
+        Err(_) => return AppSettings::default(),
+    };
+    if !path.exists() {
+        return AppSettings::default();
+    }
+    std::fs::read_to_string(&path)
+        .ok()
+        .and_then(|s| serde_json::from_str(&s).ok())
+        .unwrap_or_default()
+}
+
 fn config_path(app: &tauri::AppHandle) -> Result<std::path::PathBuf, String> {
     app.path()
         .app_config_dir()

@@ -11,7 +11,16 @@
       "Bash(cargo check *)",
       "Bash(node -e ' *)",
       "Bash(python3 *)",
-      "Bash(cargo clippy *)"
+      "Bash(cargo clippy *)",
+      "Bash(git commit *)",
+      "Bash(npm run *)",
+      "Bash(echo \"PID=$!\")",
+      "Bash(pkill -f \"tauri dev\")",
+      "Bash(pkill -f \"vite\")",
+      "Bash(pkill -f \"pm-system\")",
+      "Bash(echo \"Background PID: $!\")",
+      "Bash(pkill -f \"pm-system\\\\|tauri dev\\\\|vite\")",
+      "Bash(git -C /Users/yang/PM_System log --oneline -3)"
     ]
   }
 }

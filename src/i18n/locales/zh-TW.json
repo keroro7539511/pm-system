@@ -103,6 +103,45 @@
     "saved": "已儲存",
     "saveError": "儲存失敗"
   },
+  "clients": {
+    "title": "客戶管理",
+    "new": "新增客戶",
+    "edit": "編輯客戶",
+    "allEmails": "全部信件",
+    "noClients": "尚無客戶",
+    "priority": {
+      "1": "高優先",
+      "2": "一般",
+      "3": "低"
+    }
+  },
+  "emails": {
+    "title": "客戶信件",
+    "selectEmail": "選擇信件以查看內容",
+    "noSubject": "(無主旨)",
+    "aiSummary": "AI 摘要",
+    "markReplied": "標記已回覆",
+    "markPending": "待處理",
+    "markConverted": "已轉需求",
+    "category": {
+      "requirement": "需求",
+      "issue": "問題",
+      "report": "回報",
+      "other": "其他"
+    },
+    "status": {
+      "unread": "未讀",
+      "read": "已讀",
+      "replied": "已回覆",
+      "pending": "待處理",
+      "converted": "已轉需求"
+    }
+  },
+  "calendar": {
+    "title": "行事曆",
+    "today": "今天",
+    "noDueTasks": "無截止任務"
+  },
   "common": {
     "loading": "載入中...",
     "error": "發生錯誤",

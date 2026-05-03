@@ -103,6 +103,30 @@
     "saved": "Saved",
     "saveError": "Save failed"
   },
+  "clients": {
+    "title": "Clients",
+    "new": "New Client",
+    "edit": "Edit Client",
+    "allEmails": "All Emails",
+    "noClients": "No clients yet",
+    "priority": { "1": "High", "2": "Normal", "3": "Low" }
+  },
+  "emails": {
+    "title": "Emails",
+    "selectEmail": "Select an email to view",
+    "noSubject": "(No subject)",
+    "aiSummary": "AI Summary",
+    "markReplied": "Mark Replied",
+    "markPending": "Pending",
+    "markConverted": "Convert to Requirement",
+    "category": { "requirement": "Requirement", "issue": "Issue", "report": "Report", "other": "Other" },
+    "status": { "unread": "Unread", "read": "Read", "replied": "Replied", "pending": "Pending", "converted": "Converted" }
+  },
+  "calendar": {
+    "title": "Calendar",
+    "today": "Today",
+    "noDueTasks": "No tasks due"
+  },
   "common": {
     "loading": "Loading...",
     "error": "An error occurred",
