@@ -4,8 +4,10 @@ import type {
   CreateTaskPayload,
   UpdateTaskPayload,
   TaskStats,
+  TaskTrendPoint,
   Project,
   CreateProjectPayload,
+  UpdateProjectPayload,
   Client,
   CreateClientPayload,
   UpdateClientPayload,
@@ -16,6 +18,7 @@ import type {
   CreateEmployeePayload,
   UpdateEmployeePayload,
   Email,
+  EmailAttachment,
   UpdateEmailPayload,
   Document,
   CreateDocumentPayload,
@@ -38,12 +41,16 @@ export const api = {
     delete: (id: number) => invoke<void>("delete_task", { id }),
 
     stats: () => invoke<TaskStats>("get_task_stats"),
+    trend: () => invoke<TaskTrendPoint[]>("get_task_trend"),
   },
 
   projects: {
     getAll: () => invoke<Project[]>("get_projects"),
     create: (payload: CreateProjectPayload) =>
       invoke<Project>("create_project", { payload }),
+    update: (id: number, payload: UpdateProjectPayload) =>
+      invoke<Project>("update_project", { id, payload }),
+    delete: (id: number) => invoke<void>("delete_project", { id }),
   },
 
   clients: {
@@ -77,6 +84,8 @@ export const api = {
       invoke<Employee[]>("get_employees", { search: search ?? null }),
     create: (payload: CreateEmployeePayload) =>
       invoke<Employee>("create_employee", { payload }),
+    upsert: (payload: CreateEmployeePayload) =>
+      invoke<Employee>("upsert_employee", { payload }),
     update: (id: number, payload: UpdateEmployeePayload) =>
       invoke<Employee>("update_employee", { id, payload }),
     delete: (id: number) => invoke<void>("delete_employee", { id }),
@@ -136,5 +145,14 @@ export const api = {
   ai: {
     generateEmailDraft: (subject: string, sender: string, body: string) =>
       invoke<string>("generate_email_draft", { subject, sender, body }),
+  },
+
+  attachments: {
+    getForEmail: (emailId: number) =>
+      invoke<EmailAttachment[]>("get_email_attachments", { emailId }),
+    open: (path: string) =>
+      invoke<void>("open_attachment", { path }),
+    readBase64: (path: string) =>
+      invoke<string>("read_attachment_base64", { path }),
   },
 };

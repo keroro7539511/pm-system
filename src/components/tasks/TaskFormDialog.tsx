@@ -73,11 +73,12 @@ export function TaskFormDialog({ open, onOpenChange, task, defaultProjectId, onS
         due_date: task.due_date ?? "",
       });
     } else {
+      const today = new Date().toISOString().slice(0, 10);
       form.reset({
         title: "", description: "",
         project_id: defaultProjectId ? String(defaultProjectId) : "none",
         assignee: "",
-        priority: "P2", status: "todo", start_date: "", due_date: "",
+        priority: "P2", status: "todo", start_date: today, due_date: "",
       });
     }
   }, [task, open, form]);
@@ -101,7 +102,7 @@ export function TaskFormDialog({ open, onOpenChange, task, defaultProjectId, onS
         assignee: values.assignee && values.assignee !== "none" ? values.assignee : undefined,
         priority: values.priority as Priority,
         status: values.status as TaskStatus,
-        start_date: values.start_date || undefined,
+        start_date: values.start_date || new Date().toISOString().slice(0, 10),
         due_date: values.due_date || undefined,
       },
       emp?.email ?? null

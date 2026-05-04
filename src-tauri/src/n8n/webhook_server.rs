@@ -12,7 +12,7 @@ use std::sync::Arc;
 use tauri::{AppHandle, Emitter, Manager};
 
 use crate::commands::settings_commands::load_settings_sync;
-use crate::db::{clients, emails, DbPool};
+use crate::db::{attachments, clients, emails, DbPool};
 
 #[derive(Clone)]
 struct AppState {
@@ -153,8 +153,52 @@ async fn handle_email(
         }
     }
 
+    // Stash attachments before moving `incoming` into insert()
+    let incoming_attachments = incoming.attachments.clone().unwrap_or_default();
+
     match emails::insert(&state.pool, incoming) {
         Ok(email) => {
+            // Resolve & persist attachments
+            if !incoming_attachments.is_empty() {
+                let att_base = state.app
+                    .path()
+                    .app_data_dir()
+                    .map(|d| d.join("attachments").join(email.id.to_string()))
+                    .ok();
+
+                for att in &incoming_attachments {
+                    let resolved_path: Option<String> = if let Some(b64) = &att.data {
+                        // Rust decodes base64 and writes the file
+                        att_base.as_ref().and_then(|base| {
+                            std::fs::create_dir_all(base).ok()?;
+                            let path = base.join(&att.filename);
+                            use std::io::Write;
+                            let bytes = decode_base64(b64).ok()?;
+                            std::fs::File::create(&path).ok()?.write_all(&bytes).ok()?;
+                            path.to_str().map(|s| s.to_string())
+                        })
+                    } else {
+                        att.file_path.clone()
+                    };
+
+                    if let Some(path) = resolved_path {
+                        let size = att.size.or_else(|| {
+                            std::fs::metadata(&path).ok().map(|m| m.len() as i64)
+                        });
+                        if let Err(e) = attachments::insert_resolved(
+                            &state.pool,
+                            email.id,
+                            &att.filename,
+                            &path,
+                            att.mime_type.as_deref(),
+                            size,
+                        ) {
+                            eprintln!("[webhook] attachment insert error: {e}");
+                        }
+                    }
+                }
+            }
+
             let _ = state.app.emit("email:received", &email);
             StatusCode::OK
         }
@@ -163,6 +207,25 @@ async fn handle_email(
             StatusCode::INTERNAL_SERVER_ERROR
         }
     }
+}
+
+fn decode_base64(s: &str) -> Result<Vec<u8>, String> {
+    use std::io::Read;
+    // Remove any whitespace/newlines n8n might add
+    let clean: String = s.chars().filter(|c| !c.is_ascii_whitespace()).collect();
+    // Try standard then URL-safe alphabet
+    let engine_std = base64::engine::GeneralPurpose::new(
+        &base64::alphabet::STANDARD,
+        base64::engine::general_purpose::PAD,
+    );
+    let engine_url = base64::engine::GeneralPurpose::new(
+        &base64::alphabet::URL_SAFE,
+        base64::engine::general_purpose::PAD,
+    );
+    use base64::Engine;
+    engine_std.decode(&clean)
+        .or_else(|_| engine_url.decode(&clean))
+        .map_err(|e| e.to_string())
 }
 
 // POST /webhook/calendar-event

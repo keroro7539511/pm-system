@@ -29,26 +29,56 @@ pub struct ProjectSummary {
 
 #[tauri::command]
 pub async fn generate_weekly_report(pool: State<'_, DbPool>) -> CmdResult<WeeklyReport> {
+    use chrono::{Datelike, Duration, Local};
+
     let conn = pool.get().map_err(|e| e.to_string())?;
 
+    let today = Local::now().date_naive();
+    let monday = today - Duration::days(today.weekday().num_days_from_monday() as i64);
+    let friday = monday + Duration::days(4);
+    let mon_str = monday.to_string();
+    let fri_str = friday.to_string();
+
     let tasks_completed: i64 = conn
-        .query_row("SELECT COUNT(*) FROM tasks WHERE status = 'done' AND completed_at >= datetime('now', '-7 days')", [], |r| r.get(0))
+        .query_row(
+            "SELECT COUNT(*) FROM tasks WHERE status = 'done' \
+             AND date(completed_at) >= ?1 AND date(completed_at) <= ?2",
+            rusqlite::params![mon_str, fri_str],
+            |r| r.get(0),
+        )
         .unwrap_or(0);
 
     let tasks_created: i64 = conn
-        .query_row("SELECT COUNT(*) FROM tasks WHERE created_at >= datetime('now', '-7 days')", [], |r| r.get(0))
+        .query_row(
+            "SELECT COUNT(*) FROM tasks WHERE date(created_at) >= ?1 AND date(created_at) <= ?2",
+            rusqlite::params![mon_str, fri_str],
+            |r| r.get(0),
+        )
         .unwrap_or(0);
 
     let tasks_overdue: i64 = conn
-        .query_row("SELECT COUNT(*) FROM tasks WHERE status NOT IN ('done') AND due_date < date('now')", [], |r| r.get(0))
+        .query_row(
+            "SELECT COUNT(*) FROM tasks WHERE status NOT IN ('done') AND due_date < date('now')",
+            [],
+            |r| r.get(0),
+        )
         .unwrap_or(0);
 
     let emails_received: i64 = conn
-        .query_row("SELECT COUNT(*) FROM emails WHERE received_at >= datetime('now', '-7 days')", [], |r| r.get(0))
+        .query_row(
+            "SELECT COUNT(*) FROM emails WHERE date(received_at) >= ?1 AND date(received_at) <= ?2",
+            rusqlite::params![mon_str, fri_str],
+            |r| r.get(0),
+        )
         .unwrap_or(0);
 
     let emails_replied: i64 = conn
-        .query_row("SELECT COUNT(*) FROM emails WHERE status = 'replied'", [], |r| r.get(0))
+        .query_row(
+            "SELECT COUNT(*) FROM emails WHERE status = 'replied' \
+             AND date(received_at) >= ?1 AND date(received_at) <= ?2",
+            rusqlite::params![mon_str, fri_str],
+            |r| r.get(0),
+        )
         .unwrap_or(0);
 
     let mut proj_stmt = conn.prepare(
@@ -78,10 +108,8 @@ pub async fn generate_weekly_report(pool: State<'_, DbPool>) -> CmdResult<Weekly
         if p.progress_pct >= 80 { highlights.push(format!("「{}」進度已達 {}%，接近完成", p.name, p.progress_pct)); }
     }
 
-    use chrono::Local;
-    let now = Local::now();
-    let period_end = now.format("%Y-%m-%d").to_string();
-    let period_start = (now - chrono::Duration::days(6)).format("%Y-%m-%d").to_string();
+    let period_start = mon_str;
+    let period_end   = fri_str;
 
     Ok(WeeklyReport {
         period_start,
@@ -160,16 +188,6 @@ pub async fn export_data(app: tauri::AppHandle, pool: State<'_, DbPool>) -> CmdR
 }
 
 #[tauri::command]
-pub async fn check_for_updates(app: tauri::AppHandle) -> CmdResult<String> {
-    use tauri_plugin_updater::UpdaterExt;
-    match app.updater() {
-        Ok(updater) => {
-            match updater.check().await {
-                Ok(Some(update)) => Ok(format!("有新版本可用：{}", update.version)),
-                Ok(None) => Ok("已是最新版本".to_string()),
-                Err(e) => Err(e.to_string()),
-            }
-        }
-        Err(_) => Err("更新服務未設定（需要 GitHub Releases endpoint）".to_string()),
-    }
+pub async fn check_for_updates(_app: tauri::AppHandle) -> CmdResult<String> {
+    Ok("自動更新功能尚未設定".to_string())
 }

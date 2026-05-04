@@ -73,6 +73,9 @@
       "description": "Description",
       "descriptionPlaceholder": "Project goals and scope..."
     },
+    "editProject": "Edit Project",
+    "deleteProject": "Delete Project",
+    "deleteProjectConfirm": "Delete this project? Tasks inside will become uncategorized. This cannot be undone.",
     "status": {
       "active": "Active",
       "paused": "Paused",

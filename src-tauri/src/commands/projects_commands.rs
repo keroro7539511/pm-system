@@ -16,3 +16,17 @@ pub async fn create_project(
 ) -> CmdResult<projects::Project> {
     projects::create(&pool, payload).map_err(|e| e.to_string())
 }
+
+#[tauri::command]
+pub async fn update_project(
+    pool: State<'_, DbPool>,
+    id: i64,
+    payload: projects::UpdateProjectPayload,
+) -> CmdResult<projects::Project> {
+    projects::update(&pool, id, payload).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn delete_project(pool: State<'_, DbPool>, id: i64) -> CmdResult<()> {
+    projects::delete(&pool, id).map_err(|e| e.to_string())
+}

@@ -19,6 +19,14 @@ export function useCreateEmployee() {
   });
 }
 
+export function useUpsertEmployee() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: CreateEmployeePayload) => api.employees.upsert(payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: [QUERY_KEY] }),
+  });
+}
+
 export function useUpdateEmployee() {
   const qc = useQueryClient();
   return useMutation({

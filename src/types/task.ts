@@ -53,3 +53,9 @@ export interface TaskStats {
   todo: number;
   overdue: number;
 }
+
+export interface TaskTrendPoint {
+  week: string;
+  completed: number;
+  created: number;
+}

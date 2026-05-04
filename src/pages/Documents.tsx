@@ -4,7 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import Papa from "papaparse";
 import {
   FileText, Plus, Search, Trash2, Edit3, Eye,
-  User, Phone, Mail, Building2, MapPin, FolderOpen, BookUser, Upload,
+  User, Phone, Mail, Building2, MapPin, FolderOpen, BookUser, Upload, Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +20,7 @@ import {
   useContacts, useCreateContact, useUpdateContact, useDeleteContact,
 } from "@/hooks/useContacts";
 import {
-  useEmployees, useCreateEmployee, useUpdateEmployee, useDeleteEmployee,
+  useEmployees, useCreateEmployee, useUpsertEmployee, useUpdateEmployee, useDeleteEmployee,
 } from "@/hooks/useEmployees";
 import type {
   Document, CreateDocumentPayload,
@@ -192,6 +192,7 @@ export function Documents() {
   const { data: docs = [], isLoading: docsLoading }         = useDocuments(debouncedSearch || undefined);
   const { data: contacts = [], isLoading: contactsLoading } = useContacts(null, debouncedContactSearch || undefined);
   const { data: employees = [], isLoading: employeesLoading } = useEmployees(debouncedEmployeeSearch || undefined);
+  const { data: allEmployees = [] } = useEmployees(undefined);
 
   const createDoc      = useCreateDocument();
   const updateDoc      = useUpdateDocument();
@@ -200,6 +201,7 @@ export function Documents() {
   const updateContact  = useUpdateContact();
   const deleteContact  = useDeleteContact();
   const createEmployee = useCreateEmployee();
+  const upsertEmployee = useUpsertEmployee();
   const updateEmployee = useUpdateEmployee();
   const deleteEmployee = useDeleteEmployee();
 
@@ -313,7 +315,7 @@ export function Documents() {
 
   function handleEmployeeSubmit(payload: CreateEmployeePayload) {
     if (editingEmployee) {
-      updateEmployee.mutate({ id: editingEmployee.id, payload }, {
+      updateEmployee.mutate({ id: editingEmployee.id, payload: { name: payload.name, email: payload.email, extension: payload.extension, department: payload.department } }, {
         onSuccess: (updated) => {
           setSelectedEmployee(updated);
           setEmployeeFormOpen(false);
@@ -321,9 +323,9 @@ export function Documents() {
         },
       });
     } else {
-      createEmployee.mutate(payload, {
-        onSuccess: (created) => {
-          setSelectedEmployee(created);
+      upsertEmployee.mutate(payload, {
+        onSuccess: (result) => {
+          setSelectedEmployee(result);
           setEmployeeFormOpen(false);
         },
       });
@@ -350,7 +352,7 @@ export function Documents() {
           const name = row["name"] ?? row["姓名"] ?? row["Name"] ?? "";
           if (!name.trim()) { fail++; continue; }
           try {
-            await createEmployee.mutateAsync({
+            await upsertEmployee.mutateAsync({
               name:       name.trim(),
               email:      (row["email"] ?? row["Email"] ?? row["信箱"] ?? "").trim() || null,
               extension:  (row["extension"] ?? row["分機"] ?? "").trim() || null,
@@ -370,6 +372,25 @@ export function Documents() {
         setCsvResult({ ok: 0, fail: -1 });
       },
     });
+  }
+
+  function handleCsvExport() {
+    const rows = allEmployees.map((e) => ({
+      name:       e.name,
+      email:      e.email      ?? "",
+      extension:  e.extension  ?? "",
+      department: e.department ?? "",
+    }));
+    const csv = Papa.unparse(rows, { header: true });
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `employees_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   }
 
   return (
@@ -612,6 +633,15 @@ export function Documents() {
               <div className="flex items-center justify-between">
                 <h1 className="text-lg font-semibold text-text-primary">通訊錄</h1>
                 <div className="flex items-center gap-1">
+                  <Button
+                    size="sm" variant="ghost"
+                    onClick={handleCsvExport}
+                    disabled={allEmployees.length === 0}
+                    className="h-7 px-2 text-xs gap-1"
+                    title="匯出 CSV"
+                  >
+                    <Download className="h-3.5 w-3.5" />匯出
+                  </Button>
                   <Button
                     size="sm" variant="ghost"
                     onClick={() => csvInputRef.current?.click()}

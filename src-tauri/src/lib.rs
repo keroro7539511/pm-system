@@ -9,7 +9,6 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_notification::init())
-        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .setup(|app| {
@@ -35,9 +34,12 @@ pub fn run() {
             commands::tasks_commands::update_task,
             commands::tasks_commands::delete_task,
             commands::tasks_commands::get_task_stats,
+            commands::tasks_commands::get_task_trend,
             // Projects
             commands::projects_commands::get_projects,
             commands::projects_commands::create_project,
+            commands::projects_commands::update_project,
+            commands::projects_commands::delete_project,
             // Clients
             commands::clients_commands::get_clients,
             commands::clients_commands::create_client,
@@ -70,12 +72,17 @@ pub fn run() {
             // Employees
             commands::employees_commands::get_employees,
             commands::employees_commands::create_employee,
+            commands::employees_commands::upsert_employee,
             commands::employees_commands::update_employee,
             commands::employees_commands::delete_employee,
             // Notifications
             commands::notify_commands::notify_task_assigned,
             // AI
             commands::ai_commands::generate_email_draft,
+            // Attachments
+            commands::attachments_commands::get_email_attachments,
+            commands::attachments_commands::open_attachment,
+            commands::attachments_commands::read_attachment_base64,
         ])
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {

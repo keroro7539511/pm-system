@@ -93,6 +93,38 @@ pub fn update(pool: &DbPool, id: i64, p: UpdateEmployeePayload) -> DbResult<Empl
     Ok(stmt.query_row(params![id], map_row)?)
 }
 
+pub fn upsert(pool: &DbPool, p: CreateEmployeePayload) -> DbResult<Employee> {
+    let conn = pool.get()?;
+    let existing_id: Option<i64> = conn
+        .query_row(
+            "SELECT id FROM employees WHERE LOWER(name) = LOWER(?1) LIMIT 1",
+            params![p.name],
+            |r| r.get(0),
+        )
+        .ok();
+
+    if let Some(id) = existing_id {
+        conn.execute(
+            "UPDATE employees SET name = ?1, email = ?2, extension = ?3, department = ?4 WHERE id = ?5",
+            params![p.name, p.email, p.extension, p.department, id],
+        )?;
+        let mut stmt = conn.prepare(
+            "SELECT id, name, email, extension, department, created_at FROM employees WHERE id = ?1",
+        )?;
+        Ok(stmt.query_row(params![id], map_row)?)
+    } else {
+        conn.execute(
+            "INSERT INTO employees (name, email, extension, department) VALUES (?1, ?2, ?3, ?4)",
+            params![p.name, p.email, p.extension, p.department],
+        )?;
+        let id = conn.last_insert_rowid();
+        let mut stmt = conn.prepare(
+            "SELECT id, name, email, extension, department, created_at FROM employees WHERE id = ?1",
+        )?;
+        Ok(stmt.query_row(params![id], map_row)?)
+    }
+}
+
 pub fn delete(pool: &DbPool, id: i64) -> DbResult<()> {
     let conn = pool.get()?;
     conn.execute("DELETE FROM employees WHERE id = ?1", params![id])?;

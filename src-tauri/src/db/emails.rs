@@ -28,6 +28,7 @@ pub struct IncomingEmail {
     pub category: Option<String>,
     pub client_id: Option<i64>,
     pub received_at: Option<String>,
+    pub attachments: Option<Vec<super::attachments::IncomingAttachment>>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -82,7 +83,16 @@ pub fn insert(pool: &DbPool, e: IncomingEmail) -> DbResult<Email> {
          VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
         params![e.gmail_id, e.subject, e.sender, e.body, e.ai_summary, e.category, e.client_id, e.received_at],
     )?;
-    let id = conn.last_insert_rowid();
+
+    // Resolve the row id — if INSERT was skipped (duplicate gmail_id), look it up
+    let id: i64 = if conn.changes() > 0 {
+        conn.last_insert_rowid()
+    } else if let Some(ref gid) = e.gmail_id {
+        conn.query_row("SELECT id FROM emails WHERE gmail_id = ?1", params![gid], |r| r.get(0))?
+    } else {
+        conn.last_insert_rowid()
+    };
+
     let mut stmt = conn.prepare(&format!("SELECT {SELECT_COLS} FROM emails WHERE id = ?1"))?;
     Ok(stmt.query_row(params![id], map_row)?)
 }

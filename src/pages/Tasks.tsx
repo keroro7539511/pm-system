@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import { api } from "@/lib/tauri";
 import { toast } from "@/stores/toastStore";
-import { List, Kanban, Loader2, FolderPlus, CheckCircle2, Clock } from "lucide-react";
+import { List, Kanban, Loader2, FolderPlus, CheckCircle2, Clock, Pencil, Trash2 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { TaskList } from "@/components/tasks/TaskList";
 import { KanbanBoard } from "@/components/tasks/KanbanBoard";
@@ -15,8 +15,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTasks, useCreateTask, useUpdateTask, useDeleteTask } from "@/hooks/useTasks";
-import { useProjects, useCreateProject } from "@/hooks/useProjects";
-import type { Task, Project, CreateTaskPayload, CreateProjectPayload } from "@/types";
+import { useProjects, useCreateProject, useUpdateProject, useDeleteProject } from "@/hooks/useProjects";
+import type { Task, Project, CreateTaskPayload, CreateProjectPayload, UpdateProjectPayload } from "@/types";
 
 const STATUS_ACCENT: Record<string, string> = {
   active:    "bg-success/15 text-success border-success/25",
@@ -72,6 +72,8 @@ export function Tasks() {
   const updateTask = useUpdateTask();
   const deleteTask = useDeleteTask();
   const createProject = useCreateProject();
+  const updateProject = useUpdateProject();
+  const deleteProject = useDeleteProject();
 
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get("q") ?? "";
@@ -81,6 +83,8 @@ export function Tasks() {
   const [editingTask, setEditingTask] = useState<Task | undefined>();
   const [deletingTask, setDeletingTask] = useState<Task | undefined>();
   const [projectFormOpen, setProjectFormOpen] = useState(false);
+  const [editingProject, setEditingProject] = useState<Project | undefined>();
+  const [deletingProject, setDeletingProject] = useState<Project | undefined>();
 
   const isLoading = tasksLoading || projectsLoading;
 
@@ -182,6 +186,24 @@ export function Tasks() {
     });
   }
 
+  function handleUpdateProject(data: UpdateProjectPayload) {
+    if (!editingProject) return;
+    updateProject.mutate(
+      { id: editingProject.id, payload: data },
+      { onSuccess: () => { setEditingProject(undefined); setProjectFormOpen(false); } }
+    );
+  }
+
+  function handleDeleteProjectConfirm() {
+    if (!deletingProject) return;
+    deleteProject.mutate(deletingProject.id, {
+      onSuccess: () => {
+        if (selectedProjectId === deletingProject.id) setSelectedProjectId(null);
+        setDeletingProject(undefined);
+      },
+    });
+  }
+
   const selectedProject = projects.find((p) => p.id === selectedProjectId);
 
   return (
@@ -246,6 +268,31 @@ export function Tasks() {
           <FolderPlus className="w-3 h-3" />
           {t("projects.newProject")}
         </button>
+
+        {/* Edit / delete actions — visible when a project is selected */}
+        {selectedProject && (
+          <>
+            <div className="w-px h-4 bg-border shrink-0" />
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 px-2.5 text-xs gap-1.5 text-text-secondary hover:text-text-primary shrink-0"
+              onClick={() => { setEditingProject(selectedProject); setProjectFormOpen(true); }}
+            >
+              <Pencil className="w-3 h-3" />
+              {t("projects.editProject")}
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 px-2.5 text-xs gap-1.5 text-danger/70 hover:text-danger hover:bg-danger/10 shrink-0"
+              onClick={() => setDeletingProject(selectedProject)}
+            >
+              <Trash2 className="w-3 h-3" />
+              {t("projects.deleteProject")}
+            </Button>
+          </>
+        )}
       </div>
 
       {/* Task list / kanban */}
@@ -303,13 +350,34 @@ export function Tasks() {
         </DialogContent>
       </Dialog>
 
-      {/* Project form */}
+      {/* Project form (create or edit) */}
       <ProjectFormDialog
         open={projectFormOpen}
-        onOpenChange={setProjectFormOpen}
-        onSubmit={handleCreateProject}
-        loading={createProject.isPending}
+        onOpenChange={(open) => {
+          setProjectFormOpen(open);
+          if (!open) setEditingProject(undefined);
+        }}
+        project={editingProject}
+        onCreate={handleCreateProject}
+        onUpdate={handleUpdateProject}
+        loading={createProject.isPending || updateProject.isPending}
       />
+
+      {/* Delete project confirmation */}
+      <Dialog open={!!deletingProject} onOpenChange={(open) => !open && setDeletingProject(undefined)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t("projects.deleteProject")}</DialogTitle>
+            <DialogDescription>{t("projects.deleteProjectConfirm")}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setDeletingProject(undefined)}>{t("common.cancel")}</Button>
+            <Button variant="destructive" onClick={handleDeleteProjectConfirm} disabled={deleteProject.isPending}>
+              {t("common.delete")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

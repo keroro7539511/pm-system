@@ -21,3 +21,11 @@ export interface CreateProjectPayload {
   end_date?: string;
   description?: string;
 }
+
+export interface UpdateProjectPayload {
+  name?: string;
+  status?: ProjectStatus;
+  start_date?: string | null;
+  end_date?: string | null;
+  description?: string | null;
+}

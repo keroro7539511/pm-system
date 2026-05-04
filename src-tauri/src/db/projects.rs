@@ -27,6 +27,15 @@ pub struct CreateProjectPayload {
     pub description: Option<String>,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct UpdateProjectPayload {
+    pub name: Option<String>,
+    pub status: Option<String>,
+    pub start_date: Option<String>,
+    pub end_date: Option<String>,
+    pub description: Option<String>,
+}
+
 fn map_row(row: &Row) -> rusqlite::Result<Project> {
     Ok(Project {
         id: row.get(0)?,
@@ -77,4 +86,34 @@ pub fn create(pool: &DbPool, payload: CreateProjectPayload) -> DbResult<Project>
          FROM projects p WHERE p.id = ?1",
     )?;
     Ok(stmt.query_row(params![id], map_row)?)
+}
+
+const SELECT_WITH_COUNTS: &str =
+    "SELECT p.id, p.name, p.client_id, p.status, p.start_date, p.end_date, p.description, p.created_at,
+            COUNT(t.id) as task_count,
+            SUM(CASE WHEN t.status = 'done' THEN 1 ELSE 0 END) as done_count
+     FROM projects p LEFT JOIN tasks t ON t.project_id = p.id
+     WHERE p.id = ?1 GROUP BY p.id";
+
+pub fn update(pool: &DbPool, id: i64, p: UpdateProjectPayload) -> DbResult<Project> {
+    let conn = pool.get()?;
+    conn.execute(
+        "UPDATE projects SET
+           name        = COALESCE(?1, name),
+           status      = COALESCE(?2, status),
+           start_date  = ?3,
+           end_date    = ?4,
+           description = ?5
+         WHERE id = ?6",
+        params![p.name, p.status, p.start_date, p.end_date, p.description, id],
+    )?;
+    let mut stmt = conn.prepare(SELECT_WITH_COUNTS)?;
+    Ok(stmt.query_row(params![id], map_row)?)
+}
+
+pub fn delete(pool: &DbPool, id: i64) -> DbResult<()> {
+    let conn = pool.get()?;
+    conn.execute("UPDATE tasks SET project_id = NULL WHERE project_id = ?1", params![id])?;
+    conn.execute("DELETE FROM projects WHERE id = ?1", params![id])?;
+    Ok(())
 }

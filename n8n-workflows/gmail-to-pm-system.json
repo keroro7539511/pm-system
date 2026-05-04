@@ -1,0 +1,151 @@
+{
+  "name": "PM System — Gmail 信件接收（含附件）",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": { "item": [{ "mode": "everyMinute" }] },
+        "simple": false,
+        "downloadAttachments": true,
+        "filters": {},
+        "options": { "downloadAttachments": true }
+      },
+      "id": "gmail-trigger",
+      "name": "Gmail 觸發（收到新信件）",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "REPLACE_WITH_YOUR_GMAIL_CREDENTIAL_ID",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const inputItem = $input.first();\nconst json = inputItem.json;\nconst binary = inputItem.binary ?? {};\nconst binaryKeys = Object.keys(binary);\n\n// Normalize sender (may be string or object)\nconst senderRaw = json.From ?? json.from ?? json.Sender ?? json.sender ?? null;\nlet sender = '未知寄件者';\nif (typeof senderRaw === 'string') {\n  sender = senderRaw;\n} else if (senderRaw && typeof senderRaw === 'object') {\n  const v = senderRaw.value;\n  sender = senderRaw.text\n    ?? (Array.isArray(v) && v[0] ? v[0].name + ' <' + v[0].address + '>' : null)\n    ?? '未知寄件者';\n}\n\nconst base = {\n  gmail_id:    json.id ?? json.threadId ?? '',\n  subject:     json.Subject ?? json.subject ?? '(無主旨)',\n  sender,\n  body:        json.Text ?? json.text ?? json.Body ?? json.body ?? '',\n  received_at: json.Date ?? json.date ?? new Date().toISOString(),\n};\n\n// No attachments → one item, _done: true (skip Write Binary File)\nif (binaryKeys.length === 0) {\n  return [{ json: { ...base, _done: true } }];\n}\n\n// Has attachments → one item per attachment, carry binary for Write Binary File\nreturn binaryKeys.map(key => {\n  const bin = binary[key];\n  return {\n    json: {\n      ...base,\n      _done:     false,\n      _filename: bin.fileName ?? bin.filename ?? key,\n      _mimetype: bin.mimeType ?? null,\n    },\n    binary: { attachment: bin },\n  };\n});"
+      },
+      "id": "code-normalize-split",
+      "name": "正規化 + 分割附件",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "loose" },
+          "conditions": [
+            {
+              "id": "done-check",
+              "leftValue": "={{ $json._done }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "true" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-done",
+      "name": "有附件？",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "fileName": "=/Users/yang/PM_Attachments/{{ $json.gmail_id }}_{{ $json._filename }}",
+        "dataPropertyName": "attachment",
+        "options": {}
+      },
+      "id": "write-binary",
+      "name": "寫入附件檔案",
+      "type": "n8n-nodes-base.writeBinaryFile",
+      "typeVersion": 1,
+      "position": [960, 160]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const items = $input.all();\nconst first = items[0].json;\n\nconst emailData = {\n  gmail_id:    first.gmail_id,\n  subject:     first.subject,\n  sender:      first.sender,\n  body:        first.body,\n  received_at: first.received_at,\n};\n\nconst baseDir = '/Users/yang/PM_Attachments';\nconst attachments = items.map(item => ({\n  filename:  item.json._filename,\n  file_path: baseDir + '/' + item.json.gmail_id + '_' + item.json._filename,\n  mime_type: item.json._mimetype,\n  size:      null,\n  data:      null,\n}));\n\nreturn [{ json: { ...emailData, attachments } }];"
+      },
+      "id": "code-aggregate",
+      "name": "組合附件清單",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1200, 160]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:54321/webhook/email-received",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "X-Webhook-Secret", "value": "REPLACE_WITH_YOUR_HMAC_SECRET" }]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": { "timeout": 15000 }
+      },
+      "id": "http-with-att",
+      "name": "推送到 PM System（含附件）",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1440, 160]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:54321/webhook/email-received",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "X-Webhook-Secret", "value": "REPLACE_WITH_YOUR_HMAC_SECRET" }]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { gmail_id: $json.gmail_id, subject: $json.subject, sender: $json.sender, body: $json.body, received_at: $json.received_at } }}",
+        "options": { "timeout": 15000 }
+      },
+      "id": "http-no-att",
+      "name": "推送到 PM System（無附件）",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [960, 440]
+    }
+  ],
+  "connections": {
+    "Gmail 觸發（收到新信件）": {
+      "main": [
+        [{ "node": "正規化 + 分割附件", "type": "main", "index": 0 }]
+      ]
+    },
+    "正規化 + 分割附件": {
+      "main": [
+        [{ "node": "有附件？", "type": "main", "index": 0 }]
+      ]
+    },
+    "有附件？": {
+      "main": [
+        [{ "node": "推送到 PM System（無附件）", "type": "main", "index": 0 }],
+        [{ "node": "寫入附件檔案",              "type": "main", "index": 0 }]
+      ]
+    },
+    "寫入附件檔案": {
+      "main": [
+        [{ "node": "組合附件清單", "type": "main", "index": 0 }]
+      ]
+    },
+    "組合附件清單": {
+      "main": [
+        [{ "node": "推送到 PM System（含附件）", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "staticData": null,
+  "meta": { "templateCredsSetupCompleted": false },
+  "pinData": {}
+}

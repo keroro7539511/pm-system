@@ -1,4 +1,5 @@
 pub mod ai_commands;
+pub mod attachments_commands;
 pub mod clients_commands;
 pub mod contacts_commands;
 pub mod documents_commands;

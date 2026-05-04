@@ -15,6 +15,16 @@ export interface Email {
   created_at: string;
 }
 
+export interface EmailAttachment {
+  id: number;
+  email_id: number;
+  filename: string;
+  file_path: string;
+  mime_type: string | null;
+  size: number | null;
+  created_at: string;
+}
+
 export interface UpdateEmailPayload {
   status?: EmailStatus;
   ai_summary?: string;
