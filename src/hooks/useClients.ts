@@ -1,10 +1,21 @@
+import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { listen } from "@tauri-apps/api/event";
 import { api } from "@/lib/tauri";
 import type { CreateClientPayload, UpdateClientPayload } from "@/types";
 
 export const CLIENTS_KEY = ["clients"] as const;
 
 export function useClients() {
+  const qc = useQueryClient();
+
+  useEffect(() => {
+    const unlisten = listen("client:created", () => {
+      void qc.invalidateQueries({ queryKey: CLIENTS_KEY });
+    });
+    return () => { void unlisten.then((f) => f()); };
+  }, [qc]);
+
   return useQuery({
     queryKey: CLIENTS_KEY,
     queryFn: () => api.clients.getAll(),

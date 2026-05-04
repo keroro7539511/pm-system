@@ -9,6 +9,7 @@ export interface Task {
   assignee: string | null;
   priority: Priority;
   status: TaskStatus;
+  start_date: string | null;
   due_date: string | null;
   estimated_hours: number | null;
   actual_hours: number | null;
@@ -24,6 +25,7 @@ export interface CreateTaskPayload {
   assignee?: string;
   priority?: Priority;
   status?: TaskStatus;
+  start_date?: string;
   due_date?: string;
   estimated_hours?: number;
   tags?: string;
@@ -36,6 +38,7 @@ export interface UpdateTaskPayload {
   assignee?: string | null;
   priority?: Priority;
   status?: TaskStatus;
+  start_date?: string | null;
   due_date?: string | null;
   estimated_hours?: number | null;
   actual_hours?: number | null;

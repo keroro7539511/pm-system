@@ -23,6 +23,11 @@ pub async fn update_email(
 }
 
 #[tauri::command]
+pub async fn delete_email(pool: State<'_, DbPool>, id: i64) -> CmdResult<()> {
+    emails::delete(&pool, id).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 pub async fn mark_email_read(pool: State<'_, DbPool>, id: i64) -> CmdResult<()> {
     emails::mark_read(&pool, id).map_err(|e| e.to_string())
 }

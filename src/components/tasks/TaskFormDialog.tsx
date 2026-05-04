@@ -1,11 +1,10 @@
-import { useEffect } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
+import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useTranslation } from "react-i18next";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
-} from "@/components/ui/dialog";
+import { X, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Task, Priority, TaskStatus, CreateTaskPayload } from "@/types";
 import { useProjects } from "@/hooks/useProjects";
+import { useEmployees } from "@/hooks/useEmployees";
 
 const schema = z.object({
   title: z.string().min(1, "任務名稱不能為空"),
@@ -21,8 +21,8 @@ const schema = z.object({
   assignee: z.string().optional(),
   priority: z.enum(["P0", "P1", "P2", "P3"]),
   status: z.enum(["todo", "in_progress", "review", "done", "overdue"]),
+  start_date: z.string().optional(),
   due_date: z.string().optional(),
-  estimated_hours: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -31,71 +31,135 @@ interface TaskFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   task?: Task;
-  onSubmit: (data: CreateTaskPayload) => void;
+  defaultProjectId?: number;
+  onSubmit: (data: CreateTaskPayload, assigneeEmail?: string | null) => void;
   loading?: boolean;
 }
 
-export function TaskFormDialog({ open, onOpenChange, task, onSubmit, loading }: TaskFormDialogProps) {
+export function TaskFormDialog({ open, onOpenChange, task, defaultProjectId, onSubmit, loading }: TaskFormDialogProps) {
   const { t } = useTranslation();
   const { data: projects } = useProjects();
+  const { data: employees = [] } = useEmployees();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       title: "",
       description: "",
-      project_id: "",
+      project_id: "none",
       assignee: "",
       priority: "P2",
       status: "todo",
+      start_date: "",
       due_date: "",
-      estimated_hours: "",
     },
   });
 
+  const selectedAssigneeName = useWatch({ control: form.control, name: "assignee" });
+  const selectedEmployee = employees.find((e) => e.name === selectedAssigneeName);
+  const assigneeHasNoEmail = selectedEmployee && !selectedEmployee.email;
+
   useEffect(() => {
+    if (!open) return;
     if (task) {
       form.reset({
         title: task.title,
         description: task.description ?? "",
-        project_id: task.project_id ? String(task.project_id) : "",
+        project_id: task.project_id ? String(task.project_id) : "none",
         assignee: task.assignee ?? "",
         priority: task.priority as Priority,
         status: task.status as TaskStatus,
+        start_date: task.start_date ?? "",
         due_date: task.due_date ?? "",
-        estimated_hours: task.estimated_hours ? String(task.estimated_hours) : "",
       });
     } else {
       form.reset({
-        title: "", description: "", project_id: "", assignee: "",
-        priority: "P2", status: "todo", due_date: "", estimated_hours: "",
+        title: "", description: "",
+        project_id: defaultProjectId ? String(defaultProjectId) : "none",
+        assignee: "",
+        priority: "P2", status: "todo", start_date: "", due_date: "",
       });
     }
   }, [task, open, form]);
 
+  const close = useCallback(() => onOpenChange(false), [onOpenChange]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") close(); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, close]);
+
   const handleSubmit = form.handleSubmit((values: FormValues) => {
-    const data: CreateTaskPayload = {
-      title: values.title,
-      description: values.description || undefined,
-      project_id: values.project_id ? Number(values.project_id) : undefined,
-      assignee: values.assignee || undefined,
-      priority: values.priority as Priority,
-      status: values.status as TaskStatus,
-      due_date: values.due_date || undefined,
-      estimated_hours: values.estimated_hours ? Number(values.estimated_hours) : undefined,
-    };
-    onSubmit(data);
+    const emp = employees.find((e) => e.name === values.assignee);
+    onSubmit(
+      {
+        title: values.title,
+        description: values.description || undefined,
+        project_id: values.project_id && values.project_id !== "none" ? Number(values.project_id) : undefined,
+        assignee: values.assignee && values.assignee !== "none" ? values.assignee : undefined,
+        priority: values.priority as Priority,
+        status: values.status as TaskStatus,
+        start_date: values.start_date || undefined,
+        due_date: values.due_date || undefined,
+      },
+      emp?.email ?? null
+    );
   });
 
   const PRIORITIES: Priority[] = ["P0", "P1", "P2", "P3"];
   const STATUSES: TaskStatus[] = ["todo", "in_progress", "review", "done"];
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>{task ? t("tasks.editTask") : t("tasks.newTask")}</DialogTitle>
-        </DialogHeader>
+  if (!open) return null;
+
+  return createPortal(
+    <>
+      {/* 背景遮罩 */}
+      <div
+        onClick={close}
+        style={{
+          position: "fixed", inset: 0, zIndex: 9998,
+          backgroundColor: "rgba(0,0,0,0.55)",
+        }}
+      />
+
+      {/* 對話框本體 */}
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          position: "fixed",
+          top: "50%", left: "50%",
+          transform: "translate(-50%, -50%)",
+          zIndex: 9999,
+          width: "100%", maxWidth: "28rem",
+          maxHeight: "90vh", overflowY: "auto",
+          borderRadius: "0.75rem",
+          padding: "1.5rem",
+          backgroundColor: "var(--color-dialog-bg)",
+          color: "var(--color-text-primary)",
+          border: "1px solid var(--color-border)",
+          boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)",
+        }}
+      >
+        {/* 標題列 */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem" }}>
+          <h2 style={{ fontSize: "1rem", fontWeight: 600, margin: 0 }}>
+            {task ? t("tasks.editTask") : t("tasks.newTask")}
+          </h2>
+          <button
+            type="button" onClick={close}
+            style={{
+              background: "none", border: "none", cursor: "pointer",
+              color: "var(--color-text-secondary)", padding: "0.25rem",
+              display: "flex", alignItems: "center",
+            }}
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* 表單 */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="title">{t("tasks.fields.title")} *</Label>
@@ -107,7 +171,7 @@ export function TaskFormDialog({ open, onOpenChange, task, onSubmit, loading }: 
 
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="description">{t("tasks.fields.description")}</Label>
-            <Textarea id="description" {...form.register("description")} placeholder="" rows={2} />
+            <Textarea id="description" {...form.register("description")} rows={2} />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -158,7 +222,7 @@ export function TaskFormDialog({ open, onOpenChange, task, onSubmit, loading }: 
                   <Select value={field.value} onValueChange={field.onChange}>
                     <SelectTrigger><SelectValue placeholder={t("projects.noProject")} /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">{t("projects.noProject")}</SelectItem>
+                      <SelectItem value="none">{t("projects.noProject")}</SelectItem>
                       {(projects ?? []).map((p) => (
                         <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>
                       ))}
@@ -169,32 +233,53 @@ export function TaskFormDialog({ open, onOpenChange, task, onSubmit, loading }: 
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="assignee">{t("tasks.fields.assignee")}</Label>
-              <Input id="assignee" {...form.register("assignee")} placeholder="Yang" />
+              <Label>{t("tasks.fields.assignee")}</Label>
+              <Controller
+                control={form.control}
+                name="assignee"
+                render={({ field }) => (
+                  <Select value={field.value ?? "none"} onValueChange={field.onChange}>
+                    <SelectTrigger><SelectValue placeholder="（未指定）" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">— 未指定 —</SelectItem>
+                      {employees.map((e) => (
+                        <SelectItem key={e.id} value={e.name}>{e.name}{e.department ? ` · ${e.department}` : ""}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {assigneeHasNoEmail && (
+                <p className="flex items-center gap-1 text-[11px]" style={{ color: "var(--color-warning)" }}>
+                  <AlertTriangle size={11} />此員工未填 Email，指派後不會發送通知
+                </p>
+              )}
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
+              <Label htmlFor="start_date">{t("tasks.fields.startDate")}</Label>
+              <Input id="start_date" type="date" {...form.register("start_date")} />
+            </div>
+            <div className="flex flex-col gap-1.5">
               <Label htmlFor="due_date">{t("tasks.fields.dueDate")}</Label>
               <Input id="due_date" type="date" {...form.register("due_date")} />
             </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="estimated_hours">{t("tasks.fields.estimatedHours")}</Label>
-              <Input id="estimated_hours" type="number" min="0" step="0.5" {...form.register("estimated_hours")} placeholder="8" />
-            </div>
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+          {/* 底部按鈕 */}
+          <div className="flex justify-end gap-2 mt-2">
+            <Button type="button" variant="ghost" onClick={close}>
               {t("common.cancel")}
             </Button>
             <Button type="submit" disabled={loading}>
               {loading ? t("common.loading") : task ? t("common.save") : t("common.create")}
             </Button>
-          </DialogFooter>
+          </div>
         </form>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </>,
+    document.body
   );
 }

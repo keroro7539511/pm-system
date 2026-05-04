@@ -38,8 +38,8 @@
       "assignee": "負責人",
       "priority": "優先度",
       "status": "狀態",
-      "dueDate": "截止日期",
-      "estimatedHours": "預估工時（小時）",
+      "startDate": "開始日期",
+      "dueDate": "結束日期",
       "tags": "標籤"
     },
     "priority": {
@@ -61,6 +61,18 @@
   "projects": {
     "title": "專案",
     "noProject": "未指定專案",
+    "allProjects": "全部",
+    "newProject": "新增專案",
+    "noDates": "未設定日期",
+    "fields": {
+      "name": "專案名稱",
+      "nameRequired": "專案名稱不能為空",
+      "status": "狀態",
+      "startDate": "開始日期",
+      "endDate": "結束日期",
+      "description": "說明",
+      "descriptionPlaceholder": "專案目標與範疇..."
+    },
     "status": {
       "active": "進行中",
       "paused": "暫停",
@@ -141,6 +153,55 @@
     "title": "行事曆",
     "today": "今天",
     "noDueTasks": "無截止任務"
+  },
+  "documents": {
+    "title": "文件庫",
+    "new": "新增文件",
+    "edit": "編輯文件",
+    "deleteConfirm": "確定要刪除此文件？",
+    "search": "搜尋文件...",
+    "noDocuments": "尚無文件",
+    "noDocumentsDesc": "點擊「新增文件」建立第一份文件",
+    "fields": {
+      "name": "文件名稱",
+      "type": "類型",
+      "version": "版本",
+      "content": "內容（Markdown）",
+      "client": "關聯客戶",
+      "project": "關聯專案",
+      "expiresAt": "到期日"
+    },
+    "types": {
+      "contract": "合約",
+      "proposal": "提案",
+      "report": "報告",
+      "spec": "規格書",
+      "other": "其他"
+    },
+    "preview": "預覽",
+    "edit_content": "編輯",
+    "noContent": "此文件尚無內容"
+  },
+  "reports": {
+    "title": "週報",
+    "generate": "產生週報",
+    "generating": "產生中...",
+    "period": "報告期間",
+    "summary": "摘要統計",
+    "tasksCompleted": "完成任務",
+    "tasksCreated": "建立任務",
+    "tasksOverdue": "逾期任務",
+    "emailsReceived": "收到信件",
+    "emailsReplied": "已回覆",
+    "activeProjects": "進行中專案",
+    "highlights": "本週亮點",
+    "progress": "進度",
+    "export": "匯出資料",
+    "exporting": "匯出中...",
+    "exportSuccess": "匯出成功",
+    "exportPath": "已儲存至：",
+    "checkUpdates": "檢查更新",
+    "checkingUpdates": "檢查中..."
   },
   "common": {
     "loading": "載入中...",

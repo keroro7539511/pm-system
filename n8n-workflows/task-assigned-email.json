@@ -1,0 +1,125 @@
+{
+  "name": "PM System — 任務指派 Email 通知",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "task-assigned",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "收到任務指派 Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "task-assigned"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 取出任務資料（n8n 會把 POST body 放在 body 或直接展開）\nconst d = $input.item.json.body ?? $input.item.json;\n\n// 回傳完整任務資料供後續節點使用\nreturn {\n  event:          d.event          ?? 'task_assigned',\n  task_id:        d.task_id,\n  task_title:     d.task_title      ?? '（未命名任務）',\n  description:    d.description     ?? null,\n  assignee:       d.assignee        ?? null,\n  assignee_email: d.assignee_email  ?? null,\n  priority:       d.priority        ?? null,\n  status:         d.status          ?? null,\n  project_name:   d.project_name    ?? null,\n  start_date:     d.start_date      ?? null,\n  due_date:       d.due_date        ?? null,\n  has_email:      !!(d.assignee_email && d.assignee_email.includes('@')),\n};"
+      },
+      "id": "code-parse",
+      "name": "解析任務資料",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "has-email-check",
+              "leftValue": "={{ $json.has_email }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "true" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-has-email",
+      "name": "有 Email？",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// 組裝寄件內容\nconst d = $input.item.json;\n\nconst dateRange = d.start_date && d.due_date\n  ? `${d.start_date} → ${d.due_date}`\n  : (d.due_date ?? d.start_date ?? null);\n\nconst rows = [\n  ['任務', d.task_title],\n  d.project_name ? ['專案', d.project_name]  : null,\n  d.priority     ? ['優先級', d.priority]     : null,\n  d.status       ? ['狀態', d.status]        : null,\n  dateRange      ? ['日程', dateRange]        : null,\n].filter(Boolean);\n\nconst tableRows = rows.map(\n  ([label, val]) =>\n    `<tr><td style=\"padding:6px 12px;background:#f3f4f6;font-weight:600;white-space:nowrap\">${label}</td>` +\n    `<td style=\"padding:6px 12px\">${val}</td></tr>`\n).join('');\n\nreturn {\n  to:      d.assignee_email,\n  subject: `[PM System] 任務指派通知：${d.task_title}`,\n  html: `\n<p>您好 ${d.assignee ?? ''}，</p>\n<p>您已被指派以下任務，請確認並盡快處理：</p>\n<table style=\"border-collapse:collapse;width:100%;max-width:520px\">${tableRows}</table>\n${d.description ? `<p style=\"margin-top:12px;color:#374151\"><b>說明：</b>${d.description}</p>` : ''}\n<p style=\"margin-top:16px;color:#9ca3af;font-size:12px\">此信由 PM System 自動發送，請勿直接回覆。</p>\n  `.trim(),\n};"
+      },
+      "id": "code-build-email",
+      "name": "組裝 Email 內容",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [960, 200]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.to }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "message": "={{ $json.html }}",
+        "options": { "appendAttribution": false }
+      },
+      "id": "gmail-send",
+      "name": "Gmail 發送通知信",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [1200, 200],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "REPLACE_WITH_YOUR_GMAIL_CREDENTIAL_ID",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"ok\": true }",
+        "options": {}
+      },
+      "id": "respond-ok",
+      "name": "回應 200 OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1200, 420]
+    }
+  ],
+  "connections": {
+    "收到任務指派 Webhook": {
+      "main": [
+        [{ "node": "解析任務資料", "type": "main", "index": 0 }]
+      ]
+    },
+    "解析任務資料": {
+      "main": [
+        [{ "node": "有 Email？", "type": "main", "index": 0 }]
+      ]
+    },
+    "有 Email？": {
+      "main": [
+        [{ "node": "組裝 Email 內容", "type": "main", "index": 0 }],
+        [{ "node": "回應 200 OK",     "type": "main", "index": 0 }]
+      ]
+    },
+    "組裝 Email 內容": {
+      "main": [
+        [{ "node": "Gmail 發送通知信", "type": "main", "index": 0 }]
+      ]
+    },
+    "Gmail 發送通知信": {
+      "main": [
+        [{ "node": "回應 200 OK", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "staticData": null,
+  "meta": { "templateCredsSetupCompleted": true },
+  "pinData": {}
+}

@@ -12,6 +12,7 @@ pub struct Task {
     pub assignee: Option<String>,
     pub priority: String,
     pub status: String,
+    pub start_date: Option<String>,
     pub due_date: Option<String>,
     pub estimated_hours: Option<f64>,
     pub actual_hours: Option<f64>,
@@ -28,6 +29,7 @@ pub struct CreateTaskPayload {
     pub assignee: Option<String>,
     pub priority: Option<String>,
     pub status: Option<String>,
+    pub start_date: Option<String>,
     pub due_date: Option<String>,
     pub estimated_hours: Option<f64>,
     pub tags: Option<String>,
@@ -41,6 +43,7 @@ pub struct UpdateTaskPayload {
     pub assignee: Option<String>,
     pub priority: Option<String>,
     pub status: Option<String>,
+    pub start_date: Option<String>,
     pub due_date: Option<String>,
     pub estimated_hours: Option<f64>,
     pub actual_hours: Option<f64>,
@@ -57,7 +60,7 @@ pub struct TaskStats {
     pub overdue: i64,
 }
 
-const SELECT_COLS: &str = "id, title, description, project_id, assignee, priority, status, due_date, estimated_hours, actual_hours, tags, created_at, completed_at";
+const SELECT_COLS: &str = "id, title, description, project_id, assignee, priority, status, start_date, due_date, estimated_hours, actual_hours, tags, created_at, completed_at";
 
 fn map_row(row: &Row) -> rusqlite::Result<Task> {
     Ok(Task {
@@ -68,12 +71,13 @@ fn map_row(row: &Row) -> rusqlite::Result<Task> {
         assignee: row.get(4)?,
         priority: row.get(5)?,
         status: row.get(6)?,
-        due_date: row.get(7)?,
-        estimated_hours: row.get(8)?,
-        actual_hours: row.get(9)?,
-        tags: row.get(10)?,
-        created_at: row.get(11)?,
-        completed_at: row.get(12)?,
+        start_date: row.get(7)?,
+        due_date: row.get(8)?,
+        estimated_hours: row.get(9)?,
+        actual_hours: row.get(10)?,
+        tags: row.get(11)?,
+        created_at: row.get(12)?,
+        completed_at: row.get(13)?,
     })
 }
 
@@ -98,8 +102,8 @@ pub fn get_all(pool: &DbPool, status_filter: Option<String>) -> DbResult<Vec<Tas
 pub fn create(pool: &DbPool, payload: CreateTaskPayload) -> DbResult<Task> {
     let conn = pool.get()?;
     conn.execute(
-        "INSERT INTO tasks (title, description, project_id, assignee, priority, status, due_date, estimated_hours, tags)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+        "INSERT INTO tasks (title, description, project_id, assignee, priority, status, start_date, due_date, estimated_hours, tags)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
         params![
             payload.title,
             payload.description,
@@ -107,6 +111,7 @@ pub fn create(pool: &DbPool, payload: CreateTaskPayload) -> DbResult<Task> {
             payload.assignee,
             payload.priority.unwrap_or_else(|| "P2".to_string()),
             payload.status.unwrap_or_else(|| "todo".to_string()),
+            payload.start_date,
             payload.due_date,
             payload.estimated_hours,
             payload.tags,
@@ -120,7 +125,6 @@ pub fn create(pool: &DbPool, payload: CreateTaskPayload) -> DbResult<Task> {
 
 pub fn update(pool: &DbPool, id: i64, p: UpdateTaskPayload) -> DbResult<Task> {
     let conn = pool.get()?;
-    // COALESCE keeps existing value when argument is NULL; for optional text fields we allow explicit NULL via direct assignment
     conn.execute(
         "UPDATE tasks SET
            title            = COALESCE(?1, title),
@@ -129,12 +133,13 @@ pub fn update(pool: &DbPool, id: i64, p: UpdateTaskPayload) -> DbResult<Task> {
            assignee         = ?4,
            priority         = COALESCE(?5, priority),
            status           = COALESCE(?6, status),
-           due_date         = ?7,
-           estimated_hours  = ?8,
-           actual_hours     = ?9,
-           tags             = ?10,
-           completed_at     = ?11
-         WHERE id = ?12",
+           start_date       = ?7,
+           due_date         = ?8,
+           estimated_hours  = ?9,
+           actual_hours     = ?10,
+           tags             = ?11,
+           completed_at     = ?12
+         WHERE id = ?13",
         params![
             p.title,
             p.description,
@@ -142,6 +147,7 @@ pub fn update(pool: &DbPool, id: i64, p: UpdateTaskPayload) -> DbResult<Task> {
             p.assignee,
             p.priority,
             p.status,
+            p.start_date,
             p.due_date,
             p.estimated_hours,
             p.actual_hours,

@@ -183,14 +183,43 @@ npm run tauri icon src-tauri/icons/icon-source.png
 
 ---
 
+## 已實作功能清單
+
+### 核心模組
+| 模組 | 說明 |
+|------|------|
+| Dashboard | KPI 卡片 + 任務狀態圓餅圖 + 專案進度橫條圖 + 任務趨勢折線圖 |
+| 任務管理 | 列表 / Kanban 兩種視圖，依專案篩選，CRUD，負責人員工下拉選單 |
+| 信件 | Gmail 信件列表（含未讀計數）、標記已讀、AI 擬稿回覆（Gemini/OpenAI/Claude） |
+| 行事曆 | 月曆視圖，顯示任務到期日與里程碑 |
+| 文件庫 | Markdown 文件 CRUD + 預覽；客戶窗口管理；通訊錄（員工）管理 |
+| 報表 | 週報自動生成、資料匯出 JSON |
+| 設定 | n8n 整合、AI 金鑰、主題切換、語系 |
+
+### 文件庫 — 通訊錄（db: `employees`）
+- 欄位：姓名、Email、分機、部門
+- 支援 CSV 批次匯入（欄位：`name/姓名`、`email/信箱`、`extension/分機`、`department/部門`）
+- 任務指派的「負責人」下拉選單從通訊錄載入
+
+### 文件庫 — 客戶窗口（db: `contacts`）
+- 欄位：姓名、Email、電話、公司名稱、公司地址、關聯專案、備註
+
+### 任務指派 Email 通知（n8n 串接）
+- 指派任務後，app 呼叫 `notify_task_assigned` command
+- 若設定頁填有「任務指派通知 Webhook URL」，則 POST payload 到 n8n
+- Payload 欄位：`event`, `task_id`, `task_title`, `assignee`, `assignee_email`, `project_name`, `due_date`
+- n8n 收到後以 Gmail 節點發信給 `assignee_email`
+- 若 URL 為空，靜默跳過（不報錯）
+
+---
+
 ## n8n Webhook 設定指引
 
-### App 內建 Webhook Server
-- 監聽位址：`localhost:54321`（可在設定頁修改）
-- 僅接受本機來源（127.0.0.1）
+### App 內建 Webhook Server（n8n → App）
+- 監聽位址：`0.0.0.0:54321`（可在設定頁修改；Docker 環境使用 `host.docker.internal`）
 - 驗證：HMAC-SHA256，secret 在設定頁設定
 
-### 端點清單
+### 接收端點清單
 | 端點 | 功能 |
 |------|------|
 | `POST /webhook/email-received` | n8n 推送新信件 |
@@ -198,11 +227,30 @@ npm run tauri icon src-tauri/icons/icon-source.png
 | `POST /webhook/meeting-transcript` | 會議逐字稿 |
 | `POST /webhook/weekly-report` | 週報觸發 |
 
-### n8n 設定步驟
-1. 在 PM System 設定頁取得本機 webhook base URL
-2. 在 n8n 的 Gmail 流程加入 HTTP Request 節點
-3. URL 填 `http://localhost:54321/webhook/email-received`
+### 發送端端點（App → n8n）
+| 設定欄位 | 用途 |
+|----------|------|
+| `n8n_webhook_url` | 通用 outbound trigger（測試連線用）|
+| `task_assign_webhook_url` | 任務指派時通知對方的 Gmail 流程 |
+
+### Gmail 信件接收 — n8n 設定步驟
+1. 在 PM System 設定頁確認本機 webhook port（預設 54321）
+2. n8n 建立流程：Gmail Trigger → Code（欄位正規化）→ HTTP Request
+3. HTTP Request URL：`http://host.docker.internal:54321/webhook/email-received`
 4. Header 加 `X-Webhook-Secret: <你的 secret>`
+5. Gmail Trigger 輸出欄位為大寫（`Subject`/`From`），Code 節點需做正規化
+
+### Gmail 信件接收 — n8n Code 節點（欄位正規化）
+```javascript
+const item = $input.item.json;
+return {
+  gmail_id:    item.id ?? item.threadId ?? "",
+  subject:     item.Subject ?? item.subject ?? "(無主旨)",
+  sender:      item.From    ?? item.from    ?? "未知寄件者",
+  body:        item.Text    ?? item.text    ?? item.Body ?? item.body ?? "",
+  received_at: item.Date    ?? item.date    ?? new Date().toISOString(),
+};
+```
 
 ---
 

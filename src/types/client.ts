@@ -8,6 +8,7 @@ export interface Client {
   priority: 1 | 2 | 3;
   last_contact_at: string | null;
   notes: string | null;
+  domain: string | null;
   created_at: string;
   updated_at: string;
   email_count: number;
@@ -22,6 +23,7 @@ export interface CreateClientPayload {
   industry?: string;
   priority?: 1 | 2 | 3;
   notes?: string;
+  domain?: string;
 }
 
 export interface UpdateClientPayload {
@@ -32,4 +34,5 @@ export interface UpdateClientPayload {
   industry?: string | null;
   priority?: 1 | 2 | 3;
   notes?: string | null;
+  domain?: string | null;
 }

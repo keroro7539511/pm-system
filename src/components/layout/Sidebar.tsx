@@ -25,7 +25,7 @@ export function Sidebar() {
   const { t } = useTranslation();
 
   return (
-    <aside className="flex flex-col w-[220px] min-w-[220px] h-full bg-[rgba(255,255,255,0.02)] border-r border-border px-3 py-4">
+    <aside className="flex flex-col w-[220px] min-w-[220px] h-full bg-sidebar border-r border-border px-3 py-4">
       {/* Logo */}
       <div className="flex items-center gap-2 px-2 mb-6">
         <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">

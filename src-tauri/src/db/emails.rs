@@ -102,6 +102,12 @@ pub fn update(pool: &DbPool, id: i64, p: UpdateEmailPayload) -> DbResult<Email> 
     Ok(stmt.query_row(params![id], map_row)?)
 }
 
+pub fn delete(pool: &DbPool, id: i64) -> DbResult<()> {
+    let conn = pool.get()?;
+    conn.execute("DELETE FROM emails WHERE id = ?1", params![id])?;
+    Ok(())
+}
+
 pub fn mark_read(pool: &DbPool, id: i64) -> DbResult<()> {
     let conn = pool.get()?;
     conn.execute("UPDATE emails SET status = 'read' WHERE id = ?1 AND status = 'unread'", params![id])?;

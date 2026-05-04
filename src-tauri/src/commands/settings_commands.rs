@@ -12,6 +12,20 @@ pub struct AppSettings {
     pub theme: String,
     pub language: String,
     pub auto_backup: bool,
+    #[serde(default)]
+    pub ai_api_key: String,
+    #[serde(default = "default_ai_provider")]
+    pub ai_provider: String,
+    #[serde(default)]
+    pub task_assign_webhook_url: String,
+    #[serde(default)]
+    pub my_email: String,
+    #[serde(default)]
+    pub email_blacklist_domains: String, // 換行分隔，例："spam.com\nads.net"
+}
+
+fn default_ai_provider() -> String {
+    "gemini".to_string()
 }
 
 impl Default for AppSettings {
@@ -24,6 +38,11 @@ impl Default for AppSettings {
             theme: "dark".to_string(),
             language: "zh-TW".to_string(),
             auto_backup: false,
+            ai_api_key: String::new(),
+            ai_provider: "gemini".to_string(),
+            task_assign_webhook_url: String::new(),
+            my_email: String::new(),
+            email_blacklist_domains: String::new(),
         }
     }
 }
@@ -78,6 +97,15 @@ pub async fn test_n8n_connection(url: String) -> CmdResult<bool> {
         .timeout(std::time::Duration::from_secs(5))
         .build()
         .map_err(|e| e.to_string())?;
-    let resp = client.get(&url).send().await.map_err(|e| e.to_string())?;
-    Ok(resp.status().is_success() || resp.status().as_u16() == 404)
+
+    // Use POST with a ping payload — n8n webhooks only respond to POST,
+    // and return 404 when inactive. A real 200 means the workflow is active.
+    let resp = client
+        .post(&url)
+        .json(&serde_json::json!({ "event": "ping" }))
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(resp.status().is_success())
 }

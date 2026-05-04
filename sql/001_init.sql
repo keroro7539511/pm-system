@@ -123,6 +123,32 @@ CREATE TABLE IF NOT EXISTS documents (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS employees (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    email TEXT,
+    extension TEXT,
+    department TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_employees_name ON employees(name);
+
+CREATE TABLE IF NOT EXISTS contacts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    email TEXT,
+    phone TEXT,
+    company_name TEXT,
+    company_address TEXT,
+    project_id INTEGER REFERENCES projects(id),
+    notes TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_contacts_project ON contacts(project_id);
+
 CREATE TABLE IF NOT EXISTS automation_flows (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,

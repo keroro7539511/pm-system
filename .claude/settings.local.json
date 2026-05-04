@@ -20,7 +20,20 @@
       "Bash(pkill -f \"pm-system\")",
       "Bash(echo \"Background PID: $!\")",
       "Bash(pkill -f \"pm-system\\\\|tauri dev\\\\|vite\")",
-      "Bash(git -C /Users/yang/PM_System log --oneline -3)"
+      "Bash(git -C /Users/yang/PM_System log --oneline -3)",
+      "Bash(rustup target *)",
+      "Bash(npx vite *)",
+      "Bash(curl *)",
+      "Bash(osascript *)",
+      "Bash(npx playwright *)",
+      "Bash(node *)",
+      "Read(//Users/yang/.cache/**)",
+      "Read(//Users/yang/Library/Caches/ms-playwright/**)",
+      "Bash('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' --headless --remote-debugging-port=9222 --no-sandbox --disable-gpu --user-data-dir=/tmp/chrome-test http://localhost:1420)",
+      "Bash(pip3 install *)",
+      "Bash(xargs ls *)",
+      "Bash(xargs cat *)",
+      "Bash(git add *)"
     ]
   }
 }

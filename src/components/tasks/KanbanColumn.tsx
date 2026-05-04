@@ -46,7 +46,7 @@ export function KanbanColumn({ status, tasks, onEdit, onDelete }: KanbanColumnPr
         ref={setNodeRef}
         className={cn(
           "flex flex-col gap-2 flex-1 rounded-lg p-2 min-h-[200px] transition-colors",
-          isOver ? "bg-white/5" : "bg-white/[0.02]"
+          isOver ? "bg-layer-2" : "bg-layer-1"
         )}
       >
         <SortableContext items={tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>

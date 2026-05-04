@@ -1,17 +1,18 @@
 import { useTranslation } from "react-i18next";
 import { Pencil, Trash2, Calendar, ChevronUp, ChevronDown, Minus } from "lucide-react";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
-import { StatusBadge } from "@/components/shared/StatusBadge";
+import { StatusSelect } from "@/components/shared/StatusSelect";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { formatDate, isOverdue } from "@/lib/utils";
 import { cn } from "@/lib/utils";
-import type { Task } from "@/types";
+import type { Task, TaskStatus } from "@/types";
 
 interface TaskListProps {
   tasks: Task[];
   onEdit: (task: Task) => void;
   onDelete: (task: Task) => void;
+  onStatusChange: (task: Task, status: TaskStatus) => void;
 }
 
 function PriorityIcon({ priority }: { priority: string }) {
@@ -20,7 +21,7 @@ function PriorityIcon({ priority }: { priority: string }) {
   return <Minus className="w-3.5 h-3.5 text-text-muted" />;
 }
 
-export function TaskList({ tasks, onEdit, onDelete }: TaskListProps) {
+export function TaskList({ tasks, onEdit, onDelete, onStatusChange }: TaskListProps) {
   const { t, i18n } = useTranslation();
 
   if (tasks.length === 0) {
@@ -47,7 +48,7 @@ export function TaskList({ tasks, onEdit, onDelete }: TaskListProps) {
             return (
               <tr
                 key={task.id}
-                className={cn("group hover:bg-white/3 transition-colors", overdue && "bg-danger/5")}
+                className={cn("group hover:bg-layer-1 transition-colors", overdue && "bg-danger/5")}
               >
                 <td className="py-2 pl-2">
                   <PriorityIcon priority={task.priority} />
@@ -64,7 +65,10 @@ export function TaskList({ tasks, onEdit, onDelete }: TaskListProps) {
                   <PriorityBadge priority={task.priority} />
                 </td>
                 <td className="py-2">
-                  <StatusBadge status={task.status} />
+                  <StatusSelect
+                    status={task.status}
+                    onChange={(s) => onStatusChange(task, s)}
+                  />
                 </td>
                 <td className={cn("py-2 text-xs", overdue ? "text-danger" : "text-text-muted")}>
                   {task.due_date ? (

@@ -18,6 +18,7 @@ const schema = z.object({
   email: z.string().email("請輸入有效 Email").optional().or(z.literal("")),
   phone: z.string().optional(),
   industry: z.string().optional(),
+  domain: z.string().optional(),
   notes: z.string().optional(),
 });
 
@@ -42,8 +43,9 @@ export function ClientFormDialog({ open, onOpenChange, client, onSubmit, loading
       email: client.email ?? "",
       phone: client.phone ?? "",
       industry: client.industry ?? "",
+      domain: client.domain ?? "",
       notes: client.notes ?? "",
-    } : { name: "", contact_person: "", email: "", phone: "", industry: "", notes: "" });
+    } : { name: "", contact_person: "", email: "", phone: "", industry: "", domain: "", notes: "" });
   }, [client, open]);
 
   const handleSubmit = form.handleSubmit((v) => {
@@ -53,6 +55,7 @@ export function ClientFormDialog({ open, onOpenChange, client, onSubmit, loading
       email: v.email || undefined,
       phone: v.phone || undefined,
       industry: v.industry || undefined,
+      domain: v.domain || undefined,
       notes: v.notes || undefined,
     });
   });
@@ -82,9 +85,16 @@ export function ClientFormDialog({ open, onOpenChange, client, onSubmit, loading
             <Label>Email</Label>
             <Input {...form.register("email")} placeholder="contact@company.com" />
           </div>
-          <div className="flex flex-col gap-1.5">
-            <Label>產業</Label>
-            <Input {...form.register("industry")} placeholder="製造業、科技業..." />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <Label>產業</Label>
+              <Input {...form.register("industry")} placeholder="製造業、科技業..." />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label>Email Domain</Label>
+              <Input {...form.register("domain")} placeholder="company.com" />
+              <p className="text-[11px] text-text-muted">用於自動歸類收件</p>
+            </div>
           </div>
           <div className="flex flex-col gap-1.5">
             <Label>備註</Label>

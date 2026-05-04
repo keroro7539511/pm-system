@@ -11,7 +11,8 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter, Manager};
 
-use crate::db::{emails, DbPool};
+use crate::commands::settings_commands::load_settings_sync;
+use crate::db::{clients, emails, DbPool};
 
 #[derive(Clone)]
 struct AppState {
@@ -35,18 +36,15 @@ pub async fn start(app: AppHandle, port: u16, secret: String) {
         .route("/webhook/weekly-report", post(handle_report))
         .with_state(state);
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], port));
-    tracing_or_print(format!("Webhook server listening on {addr}"));
+    // 0.0.0.0 allows Docker containers to reach this server via host.docker.internal
+    let addr = SocketAddr::from(([0, 0, 0, 0], port));
+    eprintln!("[webhook] Webhook server listening on {addr}");
 
     if let Ok(listener) = tokio::net::TcpListener::bind(addr).await {
         let _ = axum::serve(listener, router).await;
     } else {
-        tracing_or_print(format!("Failed to bind webhook server on port {port}"));
+        eprintln!("[webhook] Failed to bind webhook server on port {port}");
     }
-}
-
-fn tracing_or_print(msg: String) {
-    eprintln!("[webhook] {msg}");
 }
 
 fn verify_hmac(secret: &str, body: &[u8], header_sig: Option<&str>) -> bool {
@@ -62,8 +60,24 @@ fn verify_hmac(secret: &str, body: &[u8], header_sig: Option<&str>) -> bool {
     result == sig
 }
 
+/// "Display Name <user@example.com>" → "user@example.com"
+/// "user@example.com" → "user@example.com"
+fn extract_email_address(sender: &str) -> String {
+    if let (Some(s), Some(e)) = (sender.find('<'), sender.find('>')) {
+        if s < e {
+            return sender[s + 1..e].trim().to_lowercase();
+        }
+    }
+    sender.trim().to_lowercase()
+}
+
+/// "user@example.com" → "example.com"
+fn extract_domain(sender: &str) -> Option<String> {
+    let addr = extract_email_address(sender);
+    addr.split('@').nth(1).map(|d| d.to_lowercase())
+}
+
 // POST /webhook/email-received
-// Body: { gmail_id, subject, sender, body, ai_summary, category, client_id, received_at }
 async fn handle_email(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -76,9 +90,68 @@ async fn handle_email(
     }
     drop(secret);
 
-    let Ok(incoming) = serde_json::from_slice::<emails::IncomingEmail>(&body) else {
+    let Ok(mut incoming) = serde_json::from_slice::<emails::IncomingEmail>(&body) else {
         return StatusCode::BAD_REQUEST;
     };
+
+    let settings = load_settings_sync(&state.app);
+
+    // 過濾：跳過自己寄出的信
+    if !settings.my_email.is_empty() {
+        let sender_addr = extract_email_address(&incoming.sender);
+        if sender_addr == settings.my_email.trim().to_lowercase() {
+            return StatusCode::OK;
+        }
+    }
+
+    // 過濾：封鎖黑名單 domain
+    if let Some(sender_domain) = extract_domain(&incoming.sender) {
+        let blocked = settings
+            .email_blacklist_domains
+            .split(['\n', ','])
+            .map(str::trim)
+            .filter(|d| !d.is_empty())
+            .any(|d| d.to_lowercase() == sender_domain);
+
+        if blocked {
+            eprintln!("[webhook] blocked email from domain: {sender_domain}");
+            return StatusCode::OK;
+        }
+
+        // 依 domain 自動歸類到客戶（僅當 payload 未指定 client_id 時）
+        if incoming.client_id.is_none() {
+            match clients::find_by_domain(&state.pool, &sender_domain) {
+                Ok(Some(cid)) => {
+                    incoming.client_id = Some(cid);
+                }
+                Ok(None) => {
+                    // 找不到 → 自動建立新客戶分類
+                    let new_client_payload = clients::CreateClientPayload {
+                        name: sender_domain.clone(),
+                        contact_person: None,
+                        email: None,
+                        phone: None,
+                        industry: None,
+                        priority: Some(3),
+                        notes: None,
+                        domain: Some(sender_domain.clone()),
+                    };
+                    match clients::create(&state.pool, new_client_payload) {
+                        Ok(new_client) => {
+                            incoming.client_id = Some(new_client.id);
+                            let _ = state.app.emit("client:created", &new_client);
+                        }
+                        Err(e) => {
+                            eprintln!("[webhook] auto-create client failed: {e}");
+                        }
+                    }
+                }
+                Err(e) => {
+                    eprintln!("[webhook] find_by_domain error: {e}");
+                }
+            }
+        }
+    }
 
     match emails::insert(&state.pool, incoming) {
         Ok(email) => {

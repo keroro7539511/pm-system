@@ -38,8 +38,8 @@
       "assignee": "Assignee",
       "priority": "Priority",
       "status": "Status",
-      "dueDate": "Due Date",
-      "estimatedHours": "Estimated Hours",
+      "startDate": "Start Date",
+      "dueDate": "End Date",
       "tags": "Tags"
     },
     "priority": {
@@ -61,6 +61,18 @@
   "projects": {
     "title": "Projects",
     "noProject": "No Project",
+    "allProjects": "All",
+    "newProject": "New Project",
+    "noDates": "No dates set",
+    "fields": {
+      "name": "Project Name",
+      "nameRequired": "Project name is required",
+      "status": "Status",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "description": "Description",
+      "descriptionPlaceholder": "Project goals and scope..."
+    },
     "status": {
       "active": "Active",
       "paused": "Paused",
@@ -126,6 +138,55 @@
     "title": "Calendar",
     "today": "Today",
     "noDueTasks": "No tasks due"
+  },
+  "documents": {
+    "title": "Documents",
+    "new": "New Document",
+    "edit": "Edit Document",
+    "deleteConfirm": "Are you sure you want to delete this document?",
+    "search": "Search documents...",
+    "noDocuments": "No documents yet",
+    "noDocumentsDesc": "Click \"New Document\" to create the first one",
+    "fields": {
+      "name": "Document Name",
+      "type": "Type",
+      "version": "Version",
+      "content": "Content (Markdown)",
+      "client": "Client",
+      "project": "Project",
+      "expiresAt": "Expires At"
+    },
+    "types": {
+      "contract": "Contract",
+      "proposal": "Proposal",
+      "report": "Report",
+      "spec": "Specification",
+      "other": "Other"
+    },
+    "preview": "Preview",
+    "edit_content": "Edit",
+    "noContent": "This document has no content yet"
+  },
+  "reports": {
+    "title": "Weekly Report",
+    "generate": "Generate Report",
+    "generating": "Generating...",
+    "period": "Report Period",
+    "summary": "Summary",
+    "tasksCompleted": "Tasks Completed",
+    "tasksCreated": "Tasks Created",
+    "tasksOverdue": "Tasks Overdue",
+    "emailsReceived": "Emails Received",
+    "emailsReplied": "Emails Replied",
+    "activeProjects": "Active Projects",
+    "highlights": "Highlights",
+    "progress": "Progress",
+    "export": "Export Data",
+    "exporting": "Exporting...",
+    "exportSuccess": "Export Successful",
+    "exportPath": "Saved to:",
+    "checkUpdates": "Check for Updates",
+    "checkingUpdates": "Checking..."
   },
   "common": {
     "loading": "Loading...",

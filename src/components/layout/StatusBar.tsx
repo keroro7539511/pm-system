@@ -4,17 +4,15 @@ import { zhTW, enUS } from "date-fns/locale";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { cn } from "@/lib/utils";
 
-interface StatusBarProps {
-  n8nConnected?: boolean;
-}
-
-export function StatusBar({ n8nConnected = false }: StatusBarProps) {
-  const { t, i18n } = useTranslation();
+export function StatusBar() {
+  const { i18n } = useTranslation();
   const settings = useSettingsStore((s) => s.settings);
   const locale = i18n.language === "zh-TW" ? zhTW : enUS;
   const now = format(new Date(), "yyyy/MM/dd HH:mm", { locale });
 
-  const hasN8nUrl = Boolean(settings.n8n_webhook_url);
+  const hasTaskWebhook = Boolean(settings.task_assign_webhook_url);
+  const hasN8nUrl      = Boolean(settings.n8n_webhook_url);
+  const configured     = hasN8nUrl || hasTaskWebhook;
 
   return (
     <footer className="flex items-center justify-between px-4 h-7 border-t border-border text-[11px] text-text-muted shrink-0">
@@ -23,15 +21,11 @@ export function StatusBar({ n8nConnected = false }: StatusBarProps) {
           <span
             className={cn(
               "w-1.5 h-1.5 rounded-full",
-              hasN8nUrl && n8nConnected ? "bg-success" : "bg-text-muted"
+              configured ? "bg-success" : "bg-text-muted"
             )}
           />
           n8n{" "}
-          {hasN8nUrl && n8nConnected
-            ? t("settings.n8n.testSuccess")
-            : hasN8nUrl
-            ? "Connecting..."
-            : "Not configured"}
+          {configured ? "已設定" : "未設定"}
         </span>
       </div>
       <span>{now}</span>

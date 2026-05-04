@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Plus, User } from "lucide-react";
+import { Plus, User, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { Client } from "@/types";
@@ -9,6 +9,8 @@ interface ClientListProps {
   selectedId: number | null;
   onSelect: (client: Client) => void;
   onNew: () => void;
+  onEdit: (client: Client) => void;
+  onDelete: (client: Client) => void;
 }
 
 const PRIORITY_DOT: Record<number, string> = {
@@ -17,7 +19,7 @@ const PRIORITY_DOT: Record<number, string> = {
   3: "bg-text-muted",
 };
 
-export function ClientList({ clients, selectedId, onSelect, onNew }: ClientListProps) {
+export function ClientList({ clients, selectedId, onSelect, onNew, onEdit, onDelete }: ClientListProps) {
   const { t } = useTranslation();
 
   return (
@@ -33,32 +35,63 @@ export function ClientList({ clients, selectedId, onSelect, onNew }: ClientListP
         {/* All emails shortcut */}
         <button
           className={cn(
-            "w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-white/5 transition-colors",
+            "w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-layer-2 transition-colors",
             selectedId === null ? "bg-primary/10 text-primary" : "text-text-secondary"
           )}
           onClick={() => onSelect({ id: -1 } as Client)}
         >
           <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-          <span className="flex-1 text-left truncate">{t("common.noData") === "無資料" ? "全部信件" : "All Emails"}</span>
+          <span className="flex-1 text-left truncate text-xs">全部信件</span>
         </button>
 
         {clients.map((client) => (
-          <button
+          <div
             key={client.id}
             className={cn(
-              "w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-white/5 transition-colors",
-              selectedId === client.id ? "bg-primary/10 text-primary" : "text-text-secondary"
+              "group flex items-stretch hover:bg-layer-2 transition-colors",
+              selectedId === client.id && "bg-primary/10"
             )}
-            onClick={() => onSelect(client)}
           >
-            <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", PRIORITY_DOT[client.priority] ?? "bg-text-muted")} />
-            <span className="flex-1 text-left truncate text-xs">{client.name}</span>
-            {client.unread_count > 0 && (
-              <span className="shrink-0 text-[10px] bg-primary text-white rounded-full px-1.5 py-0.5 font-semibold leading-none">
-                {client.unread_count}
+            {/* 客戶名稱主體 */}
+            <button
+              className={cn(
+                "flex-1 flex items-center gap-2 px-3 py-2 text-left min-w-0",
+                selectedId === client.id ? "text-primary" : "text-text-secondary"
+              )}
+              onClick={() => onSelect(client)}
+            >
+              <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", PRIORITY_DOT[client.priority] ?? "bg-text-muted")} />
+              <span className="flex-1 min-w-0">
+                <span className="block truncate text-xs">{client.name}</span>
+                {client.domain && (
+                  <span className="block truncate text-[10px] text-text-muted">@{client.domain}</span>
+                )}
               </span>
-            )}
-          </button>
+              {client.unread_count > 0 && (
+                <span className="shrink-0 text-[10px] bg-primary text-white rounded-full px-1.5 py-0.5 font-semibold leading-none">
+                  {client.unread_count}
+                </span>
+              )}
+            </button>
+
+            {/* 編輯 / 刪除（hover 顯示） */}
+            <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity pr-1 gap-0.5 shrink-0">
+              <button
+                onClick={(e) => { e.stopPropagation(); onEdit(client); }}
+                className="p-1 rounded text-text-muted hover:text-primary hover:bg-primary/10 transition-colors"
+                title="編輯客戶"
+              >
+                <Pencil className="w-3 h-3" />
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); onDelete(client); }}
+                className="p-1 rounded text-text-muted hover:text-danger hover:bg-danger/10 transition-colors"
+                title="刪除客戶"
+              >
+                <Trash2 className="w-3 h-3" />
+              </button>
+            </div>
+          </div>
         ))}
 
         {clients.length === 0 && (

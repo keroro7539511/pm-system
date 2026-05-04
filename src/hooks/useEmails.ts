@@ -44,6 +44,17 @@ export function useMarkEmailRead() {
   });
 }
 
+export function useDeleteEmail() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => api.emails.delete(id),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: EMAILS_KEY });
+      void qc.invalidateQueries({ queryKey: UNREAD_KEY });
+    },
+  });
+}
+
 export function useUpdateEmail() {
   const qc = useQueryClient();
   return useMutation({

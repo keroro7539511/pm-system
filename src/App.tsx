@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Sidebar } from "@/components/layout/Sidebar";
@@ -12,6 +12,10 @@ import { Reports } from "@/pages/Reports";
 import { Documents } from "@/pages/Documents";
 import { Settings } from "@/pages/Settings";
 import { useSettingsStore } from "@/stores/settingsStore";
+import { TaskFormDialog } from "@/components/tasks/TaskFormDialog";
+import { Toaster } from "@/components/ui/Toaster";
+import { useCreateTask } from "@/hooks/useTasks";
+import type { CreateTaskPayload } from "@/types";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -21,16 +25,22 @@ const queryClient = new QueryClient({
 
 function AppShell() {
   const loadSettings = useSettingsStore((s) => s.load);
+  const [newTaskOpen, setNewTaskOpen] = useState(false);
+  const createTask = useCreateTask();
 
   useEffect(() => {
     void loadSettings();
   }, [loadSettings]);
 
+  function handleCreateTask(data: CreateTaskPayload) {
+    createTask.mutate(data, { onSuccess: () => setNewTaskOpen(false) });
+  }
+
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-background">
       <Sidebar />
       <div className="flex flex-col flex-1 min-w-0">
-        <Topbar />
+        <Topbar onNewTask={() => setNewTaskOpen(true)} />
         <main className="flex-1 overflow-hidden">
           <Routes>
             <Route path="/" element={<Dashboard />} />
@@ -44,6 +54,13 @@ function AppShell() {
         </main>
         <StatusBar />
       </div>
+      <Toaster />
+      <TaskFormDialog
+        open={newTaskOpen}
+        onOpenChange={setNewTaskOpen}
+        onSubmit={handleCreateTask}
+        loading={createTask.isPending}
+      />
     </div>
   );
 }

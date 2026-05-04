@@ -6,6 +6,9 @@
     "core:default",
     "core:path:default",
     "shell:allow-open",
-    "notification:default"
+    "notification:default",
+    "updater:default",
+    "dialog:default",
+    "fs:default"
   ]
 }

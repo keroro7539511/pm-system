@@ -3,70 +3,125 @@
 @tailwind utilities;
 
 @layer base {
+  /* ── Dark theme (default) ─────────────────────────────────────────────── */
   :root {
-    --background: #0A0E1A;
-    --foreground: #ffffff;
-    --card: rgba(255, 255, 255, 0.04);
-    --card-border: rgba(255, 255, 255, 0.08);
-    --primary: #3B82F6;
-    --primary-foreground: #ffffff;
-    --muted: rgba(255, 255, 255, 0.06);
-    --muted-foreground: rgba(255, 255, 255, 0.4);
-    --border: rgba(255, 255, 255, 0.08);
-    --input: rgba(255, 255, 255, 0.06);
-    --ring: #3B82F6;
-    --radius: 0.625rem;
+    --color-background:    #0A0E1A;
+    --color-card-bg:       rgba(255,255,255,0.045);
+    --color-border:        rgba(255,255,255,0.09);
+    --color-text-primary:  #F1F5F9;
+    --color-text-secondary:rgba(241,245,249,0.65);
+    --color-text-muted:    rgba(241,245,249,0.40);
+    --color-sidebar:       rgba(255,255,255,0.025);
+    --color-sidebar-border:rgba(255,255,255,0.07);
+    --color-input:         rgba(255,255,255,0.07);
+    --color-layer-1:       rgba(255,255,255,0.03);
+    --color-layer-2:       rgba(255,255,255,0.06);
+    --color-layer-3:       rgba(255,255,255,0.10);
+    --color-layer-4:       rgba(255,255,255,0.16);
+    --color-dropdown:      #111827;
+    --color-dialog-bg:     #0F1628;
+    --color-primary:       #3B82F6;
+    --color-accent:        #8B5CF6;
+    --color-surface:       rgba(255,255,255,0.045);
+
+    /* Radix / shadcn tokens */
+    --background:    #0A0E1A;
+    --foreground:    #F1F5F9;
+    --border:        rgba(255,255,255,0.09);
+    --ring:          #3B82F6;
+    --radius:        0.625rem;
+  }
+
+  /* ── Light theme ──────────────────────────────────────────────────────── */
+  [data-theme='light'] {
+    --color-background:    #F0F4F8;
+    --color-card-bg:       #FFFFFF;
+    --color-border:        rgba(15,23,42,0.12);
+    --color-text-primary:  #1E293B;
+    --color-text-secondary:rgba(30,41,59,0.68);
+    --color-text-muted:    rgba(30,41,59,0.44);
+    --color-sidebar:       rgba(15,23,42,0.025);
+    --color-sidebar-border:rgba(15,23,42,0.08);
+    --color-input:         rgba(15,23,42,0.05);
+    --color-layer-1:       rgba(15,23,42,0.03);
+    --color-layer-2:       rgba(15,23,42,0.06);
+    --color-layer-3:       rgba(15,23,42,0.10);
+    --color-layer-4:       rgba(15,23,42,0.16);
+    --color-dropdown:      #FFFFFF;
+    --color-dialog-bg:     #FFFFFF;
+    --color-primary:       #2563EB;
+    --color-accent:        #7C3AED;
+    --color-surface:       #FFFFFF;
+
+    --background: #F0F4F8;
+    --foreground: #1E293B;
+    --border:     rgba(15,23,42,0.12);
+    --ring:       #2563EB;
   }
 
   * {
-    @apply border-border;
     box-sizing: border-box;
+    border-color: var(--color-border);
   }
 
-  html {
-    @apply bg-background text-text-primary;
+  html, body {
+    background-color: var(--color-background);
+    color: var(--color-text-primary);
+    font-family: Inter, "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-  }
-
-  body {
-    @apply bg-background text-text-primary font-sans;
-    overflow: hidden;
+    /* overflow: hidden 在 WKWebView / WebView2 中會裁切 position:fixed 的 portal 元素（Dialog、Select）
+       實際的 overflow 限制交給 App 根元素（h-screen w-screen overflow-hidden）處理 */
+    overscroll-behavior: none;
     user-select: none;
   }
 
-  /* Allow text selection in inputs and content areas */
   input, textarea, [contenteditable] {
     user-select: text;
   }
 
-  /* Custom scrollbar */
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
+  ::-webkit-scrollbar       { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.15);
+    background: var(--color-layer-3);
     border-radius: 3px;
   }
-  ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.25);
-  }
+  ::-webkit-scrollbar-thumb:hover { background: var(--color-layer-4); }
+}
+
+/* Recharts SVG text — 深色模式強制白色，淺色模式用深色 */
+:root .recharts-text,
+:root .recharts-cartesian-axis-tick-value,
+:root .recharts-legend-item-text {
+  fill: #E2E8F0 !important;
+  color: #E2E8F0 !important;
+}
+
+[data-theme='light'] .recharts-text,
+[data-theme='light'] .recharts-cartesian-axis-tick-value,
+[data-theme='light'] .recharts-legend-item-text {
+  fill: #475569 !important;
+  color: #475569 !important;
 }
 
 @layer components {
   .glass-card {
-    @apply bg-card-bg border border-border rounded-lg;
+    @apply rounded-lg;
+    background-color: var(--color-card-bg);
+    border: 1px solid var(--color-border);
   }
 
   .nav-item {
-    @apply flex items-center gap-3 px-3 py-2 rounded-md text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors cursor-pointer text-sm font-medium;
+    @apply flex items-center gap-3 px-3 py-2 rounded-md transition-colors cursor-pointer text-sm font-medium;
+    color: var(--color-text-secondary);
   }
-
+  .nav-item:hover {
+    color: var(--color-text-primary);
+    background-color: var(--color-layer-2);
+  }
   .nav-item-active {
-    @apply text-text-primary bg-primary/10 border border-primary/20;
+    color: var(--color-text-primary);
+    background-color: color-mix(in srgb, var(--color-primary) 13%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-primary) 28%, transparent);
   }
 }

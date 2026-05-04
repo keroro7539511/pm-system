@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { CheckCircle2, XCircle } from "lucide-react";
+import { CheckCircle2, XCircle, Download, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +17,12 @@ export function Settings() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [n8nStatus, setN8nStatus] = useState<"idle" | "testing" | "ok" | "fail">("idle");
+  const [taskWebhookStatus, setTaskWebhookStatus] = useState<"idle" | "testing" | "ok" | "fail">("idle");
+  const [exporting, setExporting] = useState(false);
+  const [exportMsg, setExportMsg] = useState<string | null>(null);
+
+  const taskWebhookUnsaved =
+    form.task_assign_webhook_url !== settings.task_assign_webhook_url;
 
   useEffect(() => {
     setForm(settings);
@@ -37,6 +43,19 @@ export function Settings() {
     }
   }
 
+  async function handleExport() {
+    setExporting(true);
+    setExportMsg(null);
+    try {
+      const path = await api.reports.export();
+      setExportMsg(path);
+    } catch (e) {
+      setExportMsg(String(e));
+    } finally {
+      setExporting(false);
+    }
+  }
+
   async function handleTestN8n() {
     setN8nStatus("testing");
     try {
@@ -46,6 +65,17 @@ export function Settings() {
       setN8nStatus("fail");
     }
     setTimeout(() => setN8nStatus("idle"), 3000);
+  }
+
+  async function handleTestTaskWebhook() {
+    setTaskWebhookStatus("testing");
+    try {
+      const ok = await api.settings.testN8n(form.task_assign_webhook_url);
+      setTaskWebhookStatus(ok ? "ok" : "fail");
+    } catch {
+      setTaskWebhookStatus("fail");
+    }
+    setTimeout(() => setTaskWebhookStatus("idle"), 3000);
   }
 
   return (
@@ -108,6 +138,107 @@ export function Settings() {
             />
           </div>
         </div>
+
+        <div className="flex flex-col gap-1.5">
+          <Label>任務指派通知 Webhook URL</Label>
+          <div className="flex gap-2">
+            <Input
+              value={form.task_assign_webhook_url}
+              onChange={(e) => set("task_assign_webhook_url", e.target.value)}
+              placeholder="http://localhost:5678/webhook/task-assigned"
+              className="flex-1"
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleTestTaskWebhook}
+              disabled={!form.task_assign_webhook_url || taskWebhookStatus === "testing"}
+              className="shrink-0"
+            >
+              {taskWebhookStatus === "testing" ? "測試中..." : "測試"}
+            </Button>
+          </div>
+          {taskWebhookUnsaved && (
+            <p className="flex items-center gap-1 text-xs text-warning">
+              <AlertTriangle className="w-3.5 h-3.5" /> 尚未儲存—請按下方「儲存設定」才能生效
+            </p>
+          )}
+          {!taskWebhookUnsaved && taskWebhookStatus === "ok" && (
+            <p className="flex items-center gap-1 text-xs text-success">
+              <CheckCircle2 className="w-3.5 h-3.5" /> Webhook 已就緒（流程為 Active 狀態）
+            </p>
+          )}
+          {taskWebhookStatus === "fail" && (
+            <p className="flex items-center gap-1 text-xs text-danger">
+              <XCircle className="w-3.5 h-3.5" /> 連線失敗，請確認 n8n 流程已 Activate 且 URL 正確
+            </p>
+          )}
+          <p className="text-xs text-text-muted">指派任務時，自動 POST 到此 n8n Webhook 以發送 Email 通知</p>
+        </div>
+      </section>
+
+      {/* Email filtering */}
+      <section className="glass-card p-4 flex flex-col gap-4">
+        <h2 className="text-sm font-semibold text-text-primary">信件過濾</h2>
+
+        <div className="flex flex-col gap-1.5">
+          <Label>我的 Email（寄出去的信不顯示）</Label>
+          <Input
+            value={form.my_email}
+            onChange={(e) => set("my_email", e.target.value)}
+            placeholder="your@email.com"
+          />
+          <p className="text-xs text-text-muted">填入後，n8n 推送進來的信件中若寄件者為此 Email 會自動忽略</p>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <Label>封鎖 Domain（每行一個）</Label>
+          <textarea
+            value={form.email_blacklist_domains}
+            onChange={(e) => set("email_blacklist_domains", e.target.value)}
+            placeholder={"spam.com\nnewsletter.net\nads.example.com"}
+            rows={4}
+            className="w-full rounded-md border border-border bg-transparent px-3 py-2 text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-primary resize-none"
+          />
+          <p className="text-xs text-text-muted">來自這些 domain 的信件會被丟棄，不進資料庫</p>
+        </div>
+      </section>
+
+      {/* AI */}
+      <section className="glass-card p-4 flex flex-col gap-4">
+        <h2 className="text-sm font-semibold text-text-primary">AI 功能</h2>
+        <div className="flex flex-col gap-1.5">
+          <Label>AI 服務商</Label>
+          <Select
+            value={form.ai_provider}
+            onValueChange={(v) => set("ai_provider", v as AppSettings["ai_provider"])}
+          >
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="gemini">Google Gemini（免費）</SelectItem>
+              <SelectItem value="openai">OpenAI GPT-4o mini</SelectItem>
+              <SelectItem value="claude">Anthropic Claude Haiku</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label>API Key</Label>
+          <Input
+            type="password"
+            value={form.ai_api_key}
+            onChange={(e) => set("ai_api_key", e.target.value)}
+            placeholder={
+              form.ai_provider === "gemini" ? "AIza..." :
+              form.ai_provider === "openai" ? "sk-..." :
+              "sk-ant-api03-..."
+            }
+          />
+          <p className="text-xs text-text-muted">
+            {form.ai_provider === "gemini" && <>前往 <span className="text-primary">aistudio.google.com/apikey</span> 免費取得</>}
+            {form.ai_provider === "openai" && <>前往 <span className="text-primary">platform.openai.com/api-keys</span> 取得</>}
+            {form.ai_provider === "claude" && <>前往 <span className="text-primary">console.anthropic.com</span> 取得</>}
+          </p>
+        </div>
       </section>
 
       {/* Notifications */}
@@ -147,6 +278,29 @@ export function Settings() {
               </SelectContent>
             </Select>
           </div>
+        </div>
+      </section>
+
+      {/* Export */}
+      <section className="glass-card p-4 flex flex-col gap-3">
+        <h2 className="text-sm font-semibold text-text-primary">{t("reports.export")}</h2>
+        <p className="text-xs text-text-muted">
+          {t("reports.exportPath").replace("：", "")} — {t("reports.exportSuccess").toLowerCase()}
+        </p>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExport}
+            disabled={exporting}
+            className="gap-1.5"
+          >
+            <Download className="w-3.5 h-3.5" />
+            {exporting ? t("reports.exporting") : t("reports.export")}
+          </Button>
+          {exportMsg && (
+            <p className="text-xs text-success truncate max-w-xs">{exportMsg}</p>
+          )}
         </div>
       </section>
 

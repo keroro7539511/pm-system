@@ -9,6 +9,9 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_fs::init())
         .setup(|app| {
             let pool = db::init(app.handle()).map_err(|e| e.to_string())?;
             app.manage(pool);
@@ -42,13 +45,37 @@ pub fn run() {
             commands::clients_commands::delete_client,
             // Emails
             commands::emails_commands::get_emails,
+            commands::emails_commands::delete_email,
             commands::emails_commands::update_email,
             commands::emails_commands::mark_email_read,
             commands::emails_commands::get_unread_count,
+            // Documents
+            commands::documents_commands::get_documents,
+            commands::documents_commands::create_document,
+            commands::documents_commands::update_document,
+            commands::documents_commands::delete_document,
+            // Reports
+            commands::reports_commands::generate_weekly_report,
+            commands::reports_commands::export_data,
+            commands::reports_commands::check_for_updates,
             // Settings
             commands::settings_commands::get_settings,
             commands::settings_commands::save_settings,
             commands::settings_commands::test_n8n_connection,
+            // Contacts
+            commands::contacts_commands::get_contacts,
+            commands::contacts_commands::create_contact,
+            commands::contacts_commands::update_contact,
+            commands::contacts_commands::delete_contact,
+            // Employees
+            commands::employees_commands::get_employees,
+            commands::employees_commands::create_employee,
+            commands::employees_commands::update_employee,
+            commands::employees_commands::delete_employee,
+            // Notifications
+            commands::notify_commands::notify_task_assigned,
+            // AI
+            commands::ai_commands::generate_email_draft,
         ])
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
