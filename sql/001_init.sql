@@ -175,21 +175,3 @@ CREATE INDEX IF NOT EXISTS idx_emails_status ON emails(status);
 CREATE INDEX IF NOT EXISTS idx_emails_received ON emails(received_at);
 CREATE INDEX IF NOT EXISTS idx_tasks_project ON tasks(project_id);
 CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status);
-
--- Seed data for development
-INSERT OR IGNORE INTO projects (id, name, status, description, start_date, end_date)
-VALUES
-  (1, 'ERP 系統導入', 'active', '企業資源規劃系統升級', '2026-03-01', '2026-08-31'),
-  (2, '官網改版', 'active', '公司官方網站全面翻新', '2026-04-01', '2026-06-30'),
-  (3, 'CRM 整合', 'paused', '客戶關係管理系統整合', '2026-01-15', '2026-05-31');
-
-INSERT OR IGNORE INTO tasks (id, title, description, project_id, priority, status, due_date, estimated_hours, assignee)
-VALUES
-  (1, '需求訪談', '與各部門 PM 進行需求訪談', 1, 'P1', 'done', '2026-04-10', 8, 'Yang'),
-  (2, '系統架構設計', '設計新 ERP 系統架構圖', 1, 'P0', 'in_progress', '2026-05-15', 24, 'Yang'),
-  (3, 'UI/UX 設計稿', '完成所有頁面的設計稿', 2, 'P1', 'in_progress', '2026-05-20', 40, 'Designer'),
-  (4, 'API 串接規格書', '撰寫前後端 API 規格', 1, 'P2', 'todo', '2026-05-30', 16, 'Yang'),
-  (5, '測試計畫書', '制定 QA 測試計畫', 1, 'P2', 'todo', '2026-06-10', 8, 'QA'),
-  (6, '首頁 RWD 開發', '響應式首頁開發', 2, 'P1', 'todo', '2026-06-01', 20, 'Dev'),
-  (7, '客戶資料遷移', '將舊系統資料遷移到新 CRM', 3, 'P0', 'review', '2026-05-05', 32, 'Yang'),
-  (8, '使用者培訓', '舉辦系統使用培訓課程', 1, 'P3', 'todo', '2026-07-01', 16, 'Yang');

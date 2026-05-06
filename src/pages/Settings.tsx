@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { CheckCircle2, XCircle, Download, AlertTriangle } from "lucide-react";
+import { CheckCircle2, XCircle, Download, AlertTriangle, RefreshCw, ArrowDownToLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,12 +21,26 @@ export function Settings() {
   const [exporting, setExporting] = useState(false);
   const [exportMsg, setExportMsg] = useState<string | null>(null);
 
+  type UpdateStatus = "idle" | "checking" | "up-to-date" | "available" | "downloading" | "error";
+  const [updateStatus, setUpdateStatus] = useState<UpdateStatus>("idle");
+  const [updateVersion, setUpdateVersion] = useState<string | null>(null);
+  const [updateNotes, setUpdateNotes] = useState<string | null>(null);
+  const [downloadPct, setDownloadPct] = useState(0);
+  const [currentVersion, setCurrentVersion] = useState("0.1.0");
+
   const taskWebhookUnsaved =
     form.task_assign_webhook_url !== settings.task_assign_webhook_url;
 
   useEffect(() => {
     setForm(settings);
   }, [settings]);
+
+  useEffect(() => {
+    import("@tauri-apps/api/app")
+      .then(({ getVersion }) => getVersion())
+      .then(setCurrentVersion)
+      .catch(() => {});
+  }, []);
 
   function set<K extends keyof AppSettings>(key: K, value: AppSettings[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -65,6 +79,52 @@ export function Settings() {
       setN8nStatus("fail");
     }
     setTimeout(() => setN8nStatus("idle"), 3000);
+  }
+
+  async function handleCheckUpdate() {
+    setUpdateStatus("checking");
+    setUpdateVersion(null);
+    setUpdateNotes(null);
+    try {
+      const { check } = await import("@tauri-apps/plugin-updater");
+      const update = await check();
+      if (update?.available) {
+        setUpdateVersion(update.version);
+        setUpdateNotes(update.body ?? null);
+        setUpdateStatus("available");
+      } else {
+        setUpdateStatus("up-to-date");
+        setTimeout(() => setUpdateStatus("idle"), 3000);
+      }
+    } catch {
+      setUpdateStatus("error");
+      setTimeout(() => setUpdateStatus("idle"), 4000);
+    }
+  }
+
+  async function handleInstallUpdate() {
+    setUpdateStatus("downloading");
+    setDownloadPct(0);
+    try {
+      const { check } = await import("@tauri-apps/plugin-updater");
+      const { relaunch } = await import("@tauri-apps/plugin-process");
+      const update = await check();
+      if (!update?.available) return;
+      let downloaded = 0;
+      let total = 0;
+      await update.downloadAndInstall((event) => {
+        if (event.event === "Started") {
+          total = event.data.contentLength ?? 0;
+        } else if (event.event === "Progress") {
+          downloaded += event.data.chunkLength;
+          if (total > 0) setDownloadPct(Math.round((downloaded / total) * 100));
+        }
+      });
+      await relaunch();
+    } catch {
+      setUpdateStatus("error");
+      setTimeout(() => setUpdateStatus("idle"), 4000);
+    }
   }
 
   async function handleTestTaskWebhook() {
@@ -304,11 +364,71 @@ export function Settings() {
         </div>
       </section>
 
-      {/* About */}
-      <section className="glass-card p-4 flex flex-col gap-2">
+      {/* About & Updates */}
+      <section className="glass-card p-4 flex flex-col gap-3">
         <h2 className="text-sm font-semibold text-text-primary">{t("settings.about.title")}</h2>
-        <p className="text-xs text-text-muted">{t("settings.about.version")}: 0.1.0</p>
-        <p className="text-xs text-text-muted">PM System — Tauri 2.0 + React + TypeScript</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs text-text-secondary">PM System — Tauri 2.0 + React + TypeScript</p>
+            <p className="text-xs text-text-muted mt-0.5">{t("settings.about.version")}: {currentVersion}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            {updateStatus === "available" && (
+              <Button
+                size="sm"
+                className="gap-1.5 h-7 text-xs"
+                onClick={handleInstallUpdate}
+              >
+                <ArrowDownToLine className="w-3.5 h-3.5" />
+                安裝 {updateVersion}
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 h-7 text-xs"
+              onClick={handleCheckUpdate}
+              disabled={updateStatus === "checking" || updateStatus === "downloading"}
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${updateStatus === "checking" ? "animate-spin" : ""}`} />
+              {updateStatus === "checking" ? "檢查中..." : "檢查更新"}
+            </Button>
+          </div>
+        </div>
+
+        {/* Update status feedback */}
+        {updateStatus === "up-to-date" && (
+          <p className="flex items-center gap-1.5 text-xs text-success">
+            <CheckCircle2 className="w-3.5 h-3.5" /> 已是最新版本
+          </p>
+        )}
+        {updateStatus === "available" && updateVersion && (
+          <div className="rounded-md border border-primary/30 bg-primary/5 px-3 py-2 flex flex-col gap-1">
+            <p className="text-xs font-medium text-primary">發現新版本 {updateVersion}</p>
+            {updateNotes && (
+              <p className="text-[11px] text-text-muted whitespace-pre-wrap">{updateNotes}</p>
+            )}
+          </div>
+        )}
+        {updateStatus === "downloading" && (
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center justify-between text-xs text-text-muted">
+              <span>下載中...</span>
+              <span>{downloadPct}%</span>
+            </div>
+            <div className="h-1.5 rounded-full bg-layer-3 overflow-hidden">
+              <div
+                className="h-full bg-primary rounded-full transition-all duration-200"
+                style={{ width: `${downloadPct}%` }}
+              />
+            </div>
+          </div>
+        )}
+        {updateStatus === "error" && (
+          <p className="flex items-center gap-1.5 text-xs text-danger">
+            <XCircle className="w-3.5 h-3.5" /> 檢查失敗，請確認網路連線
+          </p>
+        )}
       </section>
 
       {/* Save */}

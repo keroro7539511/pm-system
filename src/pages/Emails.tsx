@@ -1,7 +1,8 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
+import Papa from "papaparse";
 import { ClientList } from "@/components/emails/ClientList";
 import { EmailList } from "@/components/emails/EmailList";
 import { EmailDetail } from "@/components/emails/EmailDetail";
@@ -40,6 +41,10 @@ export function Emails() {
   const updateClient = useUpdateClient();
   const deleteClient = useDeleteClient();
   const deleteEmail = useDeleteEmail();
+
+  const [csvImporting, setCsvImporting] = useState(false);
+  const [csvResult, setCsvResult] = useState<{ ok: number; fail: number } | null>(null);
+  const csvInputRef = useRef<HTMLInputElement>(null);
 
   const filteredEmails = useMemo(() => {
     if (!searchQuery) return emails;
@@ -109,6 +114,71 @@ export function Emails() {
     });
   }
 
+  function handleCsvExport() {
+    const rows = clients.map((c) => ({
+      name:           c.name,
+      contact_person: c.contact_person ?? "",
+      email:          c.email          ?? "",
+      phone:          c.phone          ?? "",
+      industry:       c.industry       ?? "",
+      priority:       c.priority,
+      notes:          c.notes          ?? "",
+      domain:         c.domain         ?? "",
+    }));
+    const csv = Papa.unparse(rows, { header: true });
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `clients_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function handleCsvFile(file: File) {
+    setCsvImporting(true);
+    setCsvResult(null);
+    Papa.parse<Record<string, string>>(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: async (results) => {
+        let ok = 0;
+        let fail = 0;
+        for (const row of results.data) {
+          const name = (row["name"] ?? row["名稱"] ?? row["客戶名稱"] ?? "").trim();
+          if (!name) { fail++; continue; }
+          const priorityRaw = (row["priority"] ?? row["優先度"] ?? "").trim();
+          const priorityNum = Number(priorityRaw);
+          const priority = (priorityNum === 1 || priorityNum === 2 || priorityNum === 3) ? priorityNum : 2;
+          try {
+            await createClient.mutateAsync({
+              name,
+              contact_person: (row["contact_person"] ?? row["聯絡人"] ?? "").trim() || undefined,
+              email:          (row["email"]          ?? row["信箱"]   ?? "").trim() || undefined,
+              phone:          (row["phone"]          ?? row["電話"]   ?? "").trim() || undefined,
+              industry:       (row["industry"]       ?? row["產業"]   ?? "").trim() || undefined,
+              priority: priority as 1 | 2 | 3,
+              notes:          (row["notes"]          ?? row["備註"]   ?? "").trim() || undefined,
+              domain:         (row["domain"]         ?? row["網域"]   ?? "").trim() || undefined,
+            });
+            ok++;
+          } catch {
+            fail++;
+          }
+        }
+        setCsvImporting(false);
+        setCsvResult({ ok, fail });
+        if (csvInputRef.current) csvInputRef.current.value = "";
+      },
+      error: () => {
+        setCsvImporting(false);
+        setCsvResult({ ok: 0, fail: -1 });
+      },
+    });
+  }
+
   if (clientsLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -120,14 +190,39 @@ export function Emails() {
   return (
     <div className="flex h-full overflow-hidden">
       {/* Column 1: Client list */}
-      <ClientList
-        clients={clients}
-        selectedId={selectedClient?.id ?? null}
-        onSelect={handleClientSelect}
-        onNew={handleClientFormOpen}
-        onEdit={handleClientEdit}
-        onDelete={setDeletingClient}
-      />
+      <div className="relative flex flex-col">
+        <ClientList
+          clients={clients}
+          selectedId={selectedClient?.id ?? null}
+          onSelect={handleClientSelect}
+          onNew={handleClientFormOpen}
+          onEdit={handleClientEdit}
+          onDelete={setDeletingClient}
+          onExport={handleCsvExport}
+          onImportClick={() => csvInputRef.current?.click()}
+          csvImporting={csvImporting}
+        />
+        {csvResult && (
+          <div className={`absolute bottom-2 left-2 right-2 text-[10px] rounded px-2 py-1 text-center ${
+            csvResult.fail === -1 ? "bg-danger/20 text-danger" :
+            csvResult.fail > 0    ? "bg-warning/20 text-warning" :
+                                    "bg-success/20 text-success"
+          }`}>
+            {csvResult.fail === -1
+              ? "CSV 格式錯誤"
+              : csvResult.fail > 0
+              ? `匯入 ${csvResult.ok} 筆，${csvResult.fail} 筆失敗`
+              : `匯入 ${csvResult.ok} 筆完成`}
+          </div>
+        )}
+        <input
+          ref={csvInputRef}
+          type="file"
+          accept=".csv"
+          className="hidden"
+          onChange={(e) => { const f = e.target.files?.[0]; if (f) handleCsvFile(f); }}
+        />
+      </div>
 
       {/* Column 2: Email list */}
       <div className="flex flex-col w-72 min-w-72 border-r border-border">

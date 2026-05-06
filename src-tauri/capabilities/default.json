@@ -8,6 +8,8 @@
     "shell:allow-open",
     "notification:default",
     "dialog:default",
-    "fs:default"
+    "fs:default",
+    "updater:default",
+    "process:allow-restart"
   ]
 }
