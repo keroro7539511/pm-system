@@ -7,11 +7,12 @@ import {
   isWithinInterval,
 } from "date-fns";
 import { zhTW, enUS } from "date-fns/locale";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
 import { cn } from "@/lib/utils";
 import { useTasks } from "@/hooks/useTasks";
+import { useProjects } from "@/hooks/useProjects";
 import type { Task } from "@/types";
 
 interface TaskBar {
@@ -39,7 +40,16 @@ export function Calendar() {
   const locale = i18n.language === "zh-TW" ? zhTW : enUS;
   const [current, setCurrent] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
-  const { data: tasks = [] } = useTasks();
+  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
+  const { data: allTasks = [] } = useTasks();
+  const { data: projects = [] } = useProjects();
+
+  const tasks = useMemo(
+    () => selectedProjectId === null
+      ? allTasks
+      : allTasks.filter((t) => t.project_id === selectedProjectId),
+    [allTasks, selectedProjectId],
+  );
 
   const { weeks } = useMemo(() => {
     const monthStart = startOfMonth(current);
@@ -113,7 +123,7 @@ export function Calendar() {
       {/* Main calendar area */}
       <div className="flex flex-col flex-1 p-5 overflow-auto min-w-0">
         {/* Month nav */}
-        <div className="flex items-center justify-between mb-4 shrink-0">
+        <div className="flex items-center justify-between mb-3 shrink-0">
           <h1 className="text-lg font-semibold text-text-primary">
             {format(current, "yyyy年 M月", { locale })}
           </h1>
@@ -131,6 +141,36 @@ export function Calendar() {
               <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
+        </div>
+
+        {/* Project filter */}
+        <div className="flex items-center gap-2 mb-4 shrink-0 overflow-x-auto pb-1">
+          <Layers className="w-3.5 h-3.5 text-text-muted shrink-0" />
+          <button
+            onClick={() => setSelectedProjectId(null)}
+            className={cn(
+              "shrink-0 px-3 py-1 rounded-full text-xs font-medium border transition-colors",
+              selectedProjectId === null
+                ? "bg-primary border-primary text-white"
+                : "border-border text-text-muted hover:border-primary/50 hover:text-text-primary"
+            )}
+          >
+            {i18n.language === "zh-TW" ? "全部專案" : "All Projects"}
+          </button>
+          {projects.map((p) => (
+            <button
+              key={p.id}
+              onClick={() => setSelectedProjectId(p.id === selectedProjectId ? null : p.id)}
+              className={cn(
+                "shrink-0 px-3 py-1 rounded-full text-xs font-medium border transition-colors whitespace-nowrap",
+                selectedProjectId === p.id
+                  ? "bg-primary border-primary text-white"
+                  : "border-border text-text-muted hover:border-primary/50 hover:text-text-primary"
+              )}
+            >
+              {p.name}
+            </button>
+          ))}
         </div>
 
         {/* Weekday headers */}
@@ -219,9 +259,15 @@ export function Calendar() {
       {/* Day detail sidebar */}
       {selectedDay && (
         <div className="w-64 border-l border-border p-4 overflow-y-auto shrink-0">
-          <p className="text-sm font-medium text-text-primary mb-3">
+          <p className="text-sm font-medium text-text-primary mb-1">
             {format(selectedDay, "M月d日 (EEEE)", { locale })}
           </p>
+          {selectedProjectId !== null && (
+            <p className="text-[10px] text-primary mb-3">
+              {projects.find((p) => p.id === selectedProjectId)?.name}
+            </p>
+          )}
+          {selectedProjectId === null && <div className="mb-3" />}
           {selectedTasks.length === 0 ? (
             <p className="text-xs text-text-muted">此日無進行中任務</p>
           ) : (

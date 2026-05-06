@@ -1,0 +1,65 @@
+{
+  "name": "PM System — Outlook 信件接收（Power Automate）",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "outlook-email",
+        "responseMode": "immediatelyReturn",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook（接收 Power Automate）",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "outlook-email-webhook"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Power Automate 送來的 JSON body\n// n8n webhook v1 把 body 包在 $json.body，v2 直接在 $json\nconst src = ($json.body && typeof $json.body === 'object' && 'gmail_id' in $json.body)\n  ? $json.body\n  : $json;\n\nreturn [{\n  json: {\n    gmail_id:    String(src.gmail_id    ?? ''),\n    subject:     String(src.subject     ?? '(無主旨)'),\n    sender:      String(src.sender      ?? '未知寄件者'),\n    body:        String(src.body        ?? ''),\n    received_at: String(src.received_at ?? new Date().toISOString()),\n  }\n}];"
+      },
+      "id": "code-normalize",
+      "name": "正規化欄位",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:54321/webhook/email-received",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "X-Webhook-Secret", "value": "REPLACE_WITH_YOUR_HMAC_SECRET" }]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { gmail_id: $json.gmail_id, subject: $json.subject, sender: $json.sender, body: $json.body, received_at: $json.received_at } }}",
+        "options": { "timeout": 15000 }
+      },
+      "id": "http-forward",
+      "name": "推送到 PM System",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [720, 300]
+    }
+  ],
+  "connections": {
+    "Webhook（接收 Power Automate）": {
+      "main": [
+        [{ "node": "正規化欄位", "type": "main", "index": 0 }]
+      ]
+    },
+    "正規化欄位": {
+      "main": [
+        [{ "node": "推送到 PM System", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "staticData": null,
+  "meta": { "templateCredsSetupCompleted": false },
+  "pinData": {}
+}

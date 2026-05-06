@@ -33,7 +33,25 @@
       "Bash(pip3 install *)",
       "Bash(xargs ls *)",
       "Bash(xargs cat *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(convert --version)",
+      "Bash(sips --version)",
+      "Read(//Users/yang/.cargo/bin/**)",
+      "Read(//Users/yang/.cargo/**)",
+      "Bash(brew install *)",
+      "Bash(/opt/homebrew/opt/rustup/bin/rustup target *)",
+      "Bash(/opt/homebrew/opt/rustup/bin/rustup default *)",
+      "Bash(/opt/homebrew/opt/rustup/bin/rustup show *)",
+      "Bash(docker stop *)",
+      "Bash(docker rm *)",
+      "Bash(docker run *)",
+      "Bash(chmod 777 /Users/yang/PM_Attachments)",
+      "Read(//Users/yang/PM_Attachments/**)",
+      "Bash(docker exec n8n *)",
+      "Bash(rustup show *)",
+      "Bash(rustup toolchain *)",
+      "Bash(gh auth *)",
+      "Bash(git reset *)"
     ]
   }
 }

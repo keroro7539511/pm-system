@@ -2,6 +2,7 @@
   "nav": {
     "dashboard": "儀表板",
     "tasks": "任務管理",
+    "goals": "目標管理",
     "emails": "客戶信件",
     "calendar": "行事曆",
     "reports": "報表",

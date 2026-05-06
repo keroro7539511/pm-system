@@ -2,6 +2,7 @@
   "nav": {
     "dashboard": "Dashboard",
     "tasks": "Tasks",
+    "goals": "Goals",
     "emails": "Emails",
     "calendar": "Calendar",
     "reports": "Reports",

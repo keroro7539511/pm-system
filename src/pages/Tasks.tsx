@@ -3,12 +3,13 @@ import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import { api } from "@/lib/tauri";
 import { toast } from "@/stores/toastStore";
-import { List, Kanban, Loader2, FolderPlus, CheckCircle2, Clock, Pencil, Trash2 } from "lucide-react";
+import { List, Kanban, Loader2, FolderPlus, CheckCircle2, Clock, Pencil, Trash2, Target } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { TaskList } from "@/components/tasks/TaskList";
 import { KanbanBoard } from "@/components/tasks/KanbanBoard";
 import { TaskFormDialog } from "@/components/tasks/TaskFormDialog";
 import { ProjectFormDialog } from "@/components/tasks/ProjectFormDialog";
+import { ProjectGoalsPanel } from "@/components/tasks/ProjectGoalsPanel";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from "@/components/ui/dialog";
@@ -85,6 +86,7 @@ export function Tasks() {
   const [projectFormOpen, setProjectFormOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | undefined>();
   const [deletingProject, setDeletingProject] = useState<Project | undefined>();
+  const [goalsOpen, setGoalsOpen] = useState(false);
 
   const isLoading = tasksLoading || projectsLoading;
 
@@ -103,20 +105,26 @@ export function Tasks() {
     return result;
   }, [tasks, selectedProjectId, searchQuery]);
 
+  function taskBasePayload(task: Task) {
+    return {
+      title:       task.title,
+      description: task.description   ?? undefined,
+      project_id:  task.project_id    ?? undefined,
+      assignee:    task.assignee      ?? undefined,
+      priority:    task.priority,
+      start_date:  task.start_date    ?? undefined,
+      due_date:    task.due_date      ?? undefined,
+      status:      task.status,
+      goal_id:     task.goal_id       ?? undefined,
+    } as const;
+  }
+
   function handleStatusChange(task: Task, status: import("@/types").TaskStatus) {
-    updateTask.mutate({
-      id: task.id,
-      payload: {
-        title:       task.title,
-        description: task.description ?? undefined,
-        project_id:  task.project_id ?? undefined,
-        assignee:    task.assignee ?? undefined,
-        priority:    task.priority,
-        status,
-        start_date:  task.start_date ?? undefined,
-        due_date:    task.due_date ?? undefined,
-      },
-    });
+    updateTask.mutate({ id: task.id, payload: { ...taskBasePayload(task), status } });
+  }
+
+  function handleGoalChange(task: Task, goalId: number | null) {
+    updateTask.mutate({ id: task.id, payload: { ...taskBasePayload(task), goal_id: goalId } });
   }
 
   function handleEdit(task: Task) {
@@ -254,9 +262,11 @@ export function Tasks() {
             key={project.id}
             project={project}
             selected={selectedProjectId === project.id}
-            onClick={() => setSelectedProjectId(
-              selectedProjectId === project.id ? null : project.id
-            )}
+            onClick={() => {
+              const next = selectedProjectId === project.id ? null : project.id;
+              setSelectedProjectId(next);
+              if (next === null) setGoalsOpen(false);
+            }}
           />
         ))}
 
@@ -269,10 +279,19 @@ export function Tasks() {
           {t("projects.newProject")}
         </button>
 
-        {/* Edit / delete actions — visible when a project is selected */}
+        {/* Edit / delete / goals actions — visible when a project is selected */}
         {selectedProject && (
           <>
             <div className="w-px h-4 bg-border shrink-0" />
+            <Button
+              size="sm"
+              variant={goalsOpen ? "default" : "ghost"}
+              className="h-7 px-2.5 text-xs gap-1.5 shrink-0"
+              onClick={() => setGoalsOpen((v) => !v)}
+            >
+              <Target className="w-3 h-3" />
+              驗收目標
+            </Button>
             <Button
               size="sm"
               variant="ghost"
@@ -295,34 +314,43 @@ export function Tasks() {
         )}
       </div>
 
-      {/* Task list / kanban */}
-      <Tabs defaultValue="list" className="flex flex-col flex-1 min-h-0">
-        <TabsList className="self-start">
-          <TabsTrigger value="list">
-            <List className="w-3.5 h-3.5" />
-            {t("tasks.listView")}
-          </TabsTrigger>
-          <TabsTrigger value="kanban">
-            <Kanban className="w-3.5 h-3.5" />
-            {t("tasks.kanbanView")}
-          </TabsTrigger>
-        </TabsList>
+      {/* Task list / kanban + Goals panel */}
+      <div className="flex flex-1 min-h-0 gap-0">
+        <Tabs defaultValue="list" className="flex flex-col flex-1 min-h-0 min-w-0">
+          <TabsList className="self-start">
+            <TabsTrigger value="list">
+              <List className="w-3.5 h-3.5" />
+              {t("tasks.listView")}
+            </TabsTrigger>
+            <TabsTrigger value="kanban">
+              <Kanban className="w-3.5 h-3.5" />
+              {t("tasks.kanbanView")}
+            </TabsTrigger>
+          </TabsList>
 
-        {isLoading ? (
-          <div className="flex items-center justify-center flex-1">
-            <Loader2 className="w-5 h-5 animate-spin text-text-muted" />
-          </div>
-        ) : (
-          <>
-            <TabsContent value="list" className="flex-1 overflow-auto min-h-0 mt-3">
-              <TaskList tasks={filteredTasks} onEdit={handleEdit} onDelete={setDeletingTask} onStatusChange={handleStatusChange} />
-            </TabsContent>
-            <TabsContent value="kanban" className="flex-1 overflow-hidden min-h-0 mt-3">
-              <KanbanBoard tasks={filteredTasks} onEdit={handleEdit} onDelete={setDeletingTask} />
-            </TabsContent>
-          </>
+          {isLoading ? (
+            <div className="flex items-center justify-center flex-1">
+              <Loader2 className="w-5 h-5 animate-spin text-text-muted" />
+            </div>
+          ) : (
+            <>
+              <TabsContent value="list" className="flex-1 overflow-auto min-h-0 mt-3">
+                <TaskList tasks={filteredTasks} onEdit={handleEdit} onDelete={setDeletingTask} onStatusChange={handleStatusChange} onGoalChange={handleGoalChange} />
+              </TabsContent>
+              <TabsContent value="kanban" className="flex-1 overflow-hidden min-h-0 mt-3">
+                <KanbanBoard tasks={filteredTasks} onEdit={handleEdit} onDelete={setDeletingTask} />
+              </TabsContent>
+            </>
+          )}
+        </Tabs>
+
+        {goalsOpen && selectedProject && (
+          <ProjectGoalsPanel
+            project={selectedProject}
+            onClose={() => setGoalsOpen(false)}
+          />
         )}
-      </Tabs>
+      </div>
 
       {/* Task form */}
       <TaskFormDialog

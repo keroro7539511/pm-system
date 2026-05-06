@@ -5,6 +5,7 @@ export * from "./contact";
 export * from "./employee";
 export * from "./email";
 export * from "./document";
+export * from "./goal";
 
 export interface AppSettings {
   n8n_webhook_url: string;

@@ -25,6 +25,10 @@ import type {
   UpdateDocumentPayload,
   WeeklyReport,
   AppSettings,
+  ProjectGoal,
+  GoalWithStats,
+  CreateGoalPayload,
+  UpdateGoalPayload,
 } from "@/types";
 
 export const api = {
@@ -140,6 +144,18 @@ export const api = {
           dueDate:      params.dueDate       ?? null,
         },
       }),
+  },
+
+  goals: {
+    getAll: (projectId?: number) =>
+      invoke<GoalWithStats[]>("get_all_goals", { projectId: projectId ?? null }),
+    getForProject: (projectId: number) =>
+      invoke<ProjectGoal[]>("get_project_goals", { projectId }),
+    create: (payload: CreateGoalPayload) =>
+      invoke<ProjectGoal>("create_project_goal", { payload }),
+    update: (id: number, payload: UpdateGoalPayload) =>
+      invoke<ProjectGoal>("update_project_goal", { id, payload }),
+    delete: (id: number) => invoke<void>("delete_project_goal", { id }),
   },
 
   ai: {

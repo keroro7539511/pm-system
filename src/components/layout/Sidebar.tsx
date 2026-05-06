@@ -9,12 +9,14 @@ import {
   FolderOpen,
   Settings,
   Zap,
+  Target,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { key: "dashboard", icon: LayoutDashboard, path: "/" },
   { key: "tasks", icon: CheckSquare, path: "/tasks" },
+  { key: "goals", icon: Target, path: "/goals" },
   { key: "emails", icon: Mail, path: "/emails" },
   { key: "calendar", icon: Calendar, path: "/calendar" },
   { key: "reports", icon: BarChart3, path: "/reports" },

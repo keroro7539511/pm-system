@@ -6,6 +6,7 @@ export interface Task {
   title: string;
   description: string | null;
   project_id: number | null;
+  goal_id: number | null;
   assignee: string | null;
   priority: Priority;
   status: TaskStatus;
@@ -22,6 +23,7 @@ export interface CreateTaskPayload {
   title: string;
   description?: string;
   project_id?: number;
+  goal_id?: number;
   assignee?: string;
   priority?: Priority;
   status?: TaskStatus;
@@ -35,6 +37,7 @@ export interface UpdateTaskPayload {
   title?: string;
   description?: string | null;
   project_id?: number | null;
+  goal_id?: number | null;
   assignee?: string | null;
   priority?: Priority;
   status?: TaskStatus;

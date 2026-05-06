@@ -2,10 +2,12 @@ import { useTranslation } from "react-i18next";
 import { Pencil, Trash2, Calendar, ChevronUp, ChevronDown, Minus } from "lucide-react";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
 import { StatusSelect } from "@/components/shared/StatusSelect";
+import { GoalSelect } from "@/components/shared/GoalSelect";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { formatDate, isOverdue } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import { useAllGoals } from "@/hooks/useGoals";
 import type { Task, TaskStatus } from "@/types";
 
 interface TaskListProps {
@@ -13,6 +15,7 @@ interface TaskListProps {
   onEdit: (task: Task) => void;
   onDelete: (task: Task) => void;
   onStatusChange: (task: Task, status: TaskStatus) => void;
+  onGoalChange: (task: Task, goalId: number | null) => void;
 }
 
 function PriorityIcon({ priority }: { priority: string }) {
@@ -21,8 +24,9 @@ function PriorityIcon({ priority }: { priority: string }) {
   return <Minus className="w-3.5 h-3.5 text-text-muted" />;
 }
 
-export function TaskList({ tasks, onEdit, onDelete, onStatusChange }: TaskListProps) {
+export function TaskList({ tasks, onEdit, onDelete, onStatusChange, onGoalChange }: TaskListProps) {
   const { t, i18n } = useTranslation();
+  const { data: goals = [] } = useAllGoals();
 
   if (tasks.length === 0) {
     return <EmptyState title={t("tasks.empty")} description={t("tasks.emptyDesc")} />;
@@ -37,6 +41,7 @@ export function TaskList({ tasks, onEdit, onDelete, onStatusChange }: TaskListPr
             <th className="pb-2 text-left font-medium">{t("tasks.fields.title")}</th>
             <th className="pb-2 text-left font-medium w-20">{t("tasks.fields.priority")}</th>
             <th className="pb-2 text-left font-medium w-24">{t("tasks.fields.status")}</th>
+            <th className="pb-2 text-left font-medium w-40">所屬目標</th>
             <th className="pb-2 text-left font-medium w-24">{t("tasks.fields.dueDate")}</th>
             <th className="pb-2 text-left font-medium w-20">{t("tasks.fields.assignee")}</th>
             <th className="pb-2 w-16"></th>
@@ -68,6 +73,14 @@ export function TaskList({ tasks, onEdit, onDelete, onStatusChange }: TaskListPr
                   <StatusSelect
                     status={task.status}
                     onChange={(s) => onStatusChange(task, s)}
+                  />
+                </td>
+                <td className="py-2">
+                  <GoalSelect
+                    goalId={task.goal_id}
+                    projectId={task.project_id}
+                    goals={goals}
+                    onChange={(goalId) => onGoalChange(task, goalId)}
                   />
                 </td>
                 <td className={cn("py-2 text-xs", overdue ? "text-danger" : "text-text-muted")}>

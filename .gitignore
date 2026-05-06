@@ -17,6 +17,9 @@ src-tauri/gen
 .env.*
 !.env.example
 
+# Claude Code
+.claude/
+
 # Editor
 .DS_Store
 .vscode/settings.json

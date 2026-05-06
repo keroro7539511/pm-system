@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { Check, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -11,40 +12,57 @@ interface StatusSelectProps {
   disabled?: boolean;
 }
 
-const DROPDOWN_HEIGHT = 148; // 4 items × ~37px
+const DROPDOWN_HEIGHT = 148;
 
 export function StatusSelect({ status, onChange, disabled }: StatusSelectProps) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
-  const [dropUp, setDropUp] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ top: number; left: number; minWidth: number; dropUp: boolean } | null>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const close = useCallback(() => setOpen(false), []);
 
   useEffect(() => {
     if (!open) return;
     function onPointerDown(e: PointerEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      if (triggerRef.current?.contains(target)) return;
+      if (dropdownRef.current?.contains(target)) return;
+      close();
     }
     document.addEventListener("pointerdown", onPointerDown);
-    return () => document.removeEventListener("pointerdown", onPointerDown);
-  }, [open]);
+    document.addEventListener("scroll", close, true);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("scroll", close, true);
+    };
+  }, [open, close]);
 
   function handleToggle() {
     if (disabled) return;
-    if (!open && ref.current) {
-      const rect = ref.current.getBoundingClientRect();
-      setDropUp(rect.bottom + DROPDOWN_HEIGHT > window.innerHeight - 8);
-    }
-    setOpen((o) => !o);
+    if (open) { close(); return; }
+    if (!triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    const dropUp = rect.bottom + DROPDOWN_HEIGHT > window.innerHeight - 8;
+    setPos({
+      top: dropUp ? rect.top - 4 : rect.bottom + 4,
+      left: rect.left,
+      minWidth: Math.max(rect.width, 110),
+      dropUp,
+    });
+    setOpen(true);
   }
 
   function handleSelect(s: TaskStatus) {
     onChange(s);
-    setOpen(false);
+    close();
   }
 
   return (
-    <div ref={ref} className="relative inline-flex">
+    <>
       <button
+        ref={triggerRef}
         type="button"
         disabled={disabled}
         onClick={handleToggle}
@@ -55,16 +73,20 @@ export function StatusSelect({ status, onChange, disabled }: StatusSelectProps) 
         )}
       >
         {t(`tasks.status.${status}`)}
-        <ChevronDown className={cn("w-2.5 h-2.5 opacity-60 transition-transform", dropUp && open && "rotate-180")} />
+        <ChevronDown className={cn("w-2.5 h-2.5 opacity-60 transition-transform", open && "rotate-180")} />
       </button>
 
-      {open && (
+      {open && pos && createPortal(
         <div
-          className={cn(
-            "absolute left-0 z-50 min-w-[110px] rounded-lg border border-border shadow-lg py-1",
-            dropUp ? "bottom-full mb-1" : "top-full mt-1"
-          )}
-          style={{ backgroundColor: "var(--color-dialog-bg)" }}
+          ref={dropdownRef}
+          className="fixed z-[9999] rounded-lg border border-border shadow-xl py-1"
+          style={{
+            top: pos.dropUp ? undefined : pos.top,
+            bottom: pos.dropUp ? window.innerHeight - pos.top : undefined,
+            left: pos.left,
+            minWidth: pos.minWidth,
+            backgroundColor: "var(--color-dialog-bg)",
+          }}
         >
           {KANBAN_COLUMNS.map((s) => (
             <button
@@ -73,19 +95,18 @@ export function StatusSelect({ status, onChange, disabled }: StatusSelectProps) 
               onClick={() => handleSelect(s)}
               className="w-full flex items-center gap-2 px-2.5 py-1.5 text-[11px] hover:bg-white/10 transition-colors text-left"
             >
-              <span
-                className={cn(
-                  "inline-flex items-center rounded border px-1.5 py-0.5 text-[10px] font-medium flex-1",
-                  STATUS_COLORS[s]
-                )}
-              >
+              <span className={cn(
+                "inline-flex items-center rounded border px-1.5 py-0.5 text-[10px] font-medium flex-1",
+                STATUS_COLORS[s]
+              )}>
                 {t(`tasks.status.${s}`)}
               </span>
               {s === status && <Check className="w-3 h-3 text-success shrink-0" />}
             </button>
           ))}
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   );
 }

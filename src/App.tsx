@@ -10,6 +10,7 @@ import { Emails } from "@/pages/Emails";
 import { Calendar } from "@/pages/Calendar";
 import { Reports } from "@/pages/Reports";
 import { Documents } from "@/pages/Documents";
+import { Goals } from "@/pages/Goals";
 import { Settings } from "@/pages/Settings";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { TaskFormDialog } from "@/components/tasks/TaskFormDialog";
@@ -49,6 +50,7 @@ function AppShell() {
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/documents" element={<Documents />} />
+            <Route path="/goals" element={<Goals />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>
         </main>

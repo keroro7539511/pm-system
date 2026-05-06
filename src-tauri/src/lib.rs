@@ -83,6 +83,12 @@ pub fn run() {
             commands::attachments_commands::get_email_attachments,
             commands::attachments_commands::open_attachment,
             commands::attachments_commands::read_attachment_base64,
+            // Goals
+            commands::goals_commands::get_all_goals,
+            commands::goals_commands::get_project_goals,
+            commands::goals_commands::create_project_goal,
+            commands::goals_commands::update_project_goal,
+            commands::goals_commands::delete_project_goal,
         ])
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {

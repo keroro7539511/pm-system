@@ -13,11 +13,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import type { Task, Priority, TaskStatus, CreateTaskPayload } from "@/types";
 import { useProjects } from "@/hooks/useProjects";
 import { useEmployees } from "@/hooks/useEmployees";
+import { useAllGoals } from "@/hooks/useGoals";
 
 const schema = z.object({
   title: z.string().min(1, "任務名稱不能為空"),
   description: z.string().optional(),
   project_id: z.string().optional(),
+  goal_id: z.string().optional(),
   assignee: z.string().optional(),
   priority: z.enum(["P0", "P1", "P2", "P3"]),
   status: z.enum(["todo", "in_progress", "review", "done", "overdue"]),
@@ -47,6 +49,7 @@ export function TaskFormDialog({ open, onOpenChange, task, defaultProjectId, onS
       title: "",
       description: "",
       project_id: "none",
+      goal_id: "none",
       assignee: "",
       priority: "P2",
       status: "todo",
@@ -56,6 +59,12 @@ export function TaskFormDialog({ open, onOpenChange, task, defaultProjectId, onS
   });
 
   const selectedAssigneeName = useWatch({ control: form.control, name: "assignee" });
+  const watchedProjectId = useWatch({ control: form.control, name: "project_id" });
+  const activeProjectId = watchedProjectId && watchedProjectId !== "none" ? Number(watchedProjectId) : null;
+  const { data: allGoals = [] } = useAllGoals();
+  const specificGoals = allGoals.filter((g) => g.project_id === activeProjectId && activeProjectId !== null);
+  const globalGoals   = allGoals.filter((g) => g.project_id === null);
+  const hasGoals = specificGoals.length > 0 || globalGoals.length > 0;
   const selectedEmployee = employees.find((e) => e.name === selectedAssigneeName);
   const assigneeHasNoEmail = selectedEmployee && !selectedEmployee.email;
 
@@ -66,6 +75,7 @@ export function TaskFormDialog({ open, onOpenChange, task, defaultProjectId, onS
         title: task.title,
         description: task.description ?? "",
         project_id: task.project_id ? String(task.project_id) : "none",
+        goal_id: task.goal_id ? String(task.goal_id) : "none",
         assignee: task.assignee ?? "",
         priority: task.priority as Priority,
         status: task.status as TaskStatus,
@@ -77,6 +87,7 @@ export function TaskFormDialog({ open, onOpenChange, task, defaultProjectId, onS
       form.reset({
         title: "", description: "",
         project_id: defaultProjectId ? String(defaultProjectId) : "none",
+        goal_id: "none",
         assignee: "",
         priority: "P2", status: "todo", start_date: today, due_date: "",
       });
@@ -99,6 +110,7 @@ export function TaskFormDialog({ open, onOpenChange, task, defaultProjectId, onS
         title: values.title,
         description: values.description || undefined,
         project_id: values.project_id && values.project_id !== "none" ? Number(values.project_id) : undefined,
+        goal_id: values.goal_id && values.goal_id !== "none" ? Number(values.goal_id) : undefined,
         assignee: values.assignee && values.assignee !== "none" ? values.assignee : undefined,
         priority: values.priority as Priority,
         status: values.status as TaskStatus,
@@ -220,7 +232,10 @@ export function TaskFormDialog({ open, onOpenChange, task, defaultProjectId, onS
                 control={form.control}
                 name="project_id"
                 render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
+                  <Select value={field.value} onValueChange={(v) => {
+                    field.onChange(v);
+                    form.setValue("goal_id", "none");
+                  }}>
                     <SelectTrigger><SelectValue placeholder={t("projects.noProject")} /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">{t("projects.noProject")}</SelectItem>
@@ -233,6 +248,47 @@ export function TaskFormDialog({ open, onOpenChange, task, defaultProjectId, onS
               />
             </div>
 
+            <div className="flex flex-col gap-1.5">
+              <Label>所屬目標</Label>
+              <Controller
+                control={form.control}
+                name="goal_id"
+                render={({ field }) => (
+                  <Select
+                    value={field.value ?? "none"}
+                    onValueChange={field.onChange}
+                    disabled={!hasGoals}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={hasGoals ? "選擇目標" : "無可用目標"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">— 不指定 —</SelectItem>
+                      {specificGoals.length > 0 && (
+                        <>
+                          <div className="px-2 py-1 text-[10px] text-text-muted uppercase tracking-wider">專案目標</div>
+                          {specificGoals.map((g) => (
+                            <SelectItem key={g.id} value={String(g.id)}>{g.title}</SelectItem>
+                          ))}
+                        </>
+                      )}
+                      {globalGoals.length > 0 && (
+                        <>
+                          {specificGoals.length > 0 && <div className="mx-1 my-1 h-px bg-border/50" />}
+                          <div className="px-2 py-1 text-[10px] text-text-muted uppercase tracking-wider">🌐 全部專案適用</div>
+                          {globalGoals.map((g) => (
+                            <SelectItem key={g.id} value={String(g.id)}>{g.title}</SelectItem>
+                          ))}
+                        </>
+                      )}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
               <Label>{t("tasks.fields.assignee")}</Label>
               <Controller
