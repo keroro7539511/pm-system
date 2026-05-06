@@ -43,7 +43,7 @@
       "open": true
     },
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDM5MjFFRDlBMkI1RkM2RTUKUldUbHhsOHJtdTBoT1FnRUk5c3NrTzMzSzY2MnhHeE5uUHpxVThyMzZVT2JRcnA3K0FYS1NpWW0K",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEEwQzc4M0NBM0Q5QjIzQ0MKUldUTUk1czl5b1BIb0l4bGVGcEhXemVtS3d1V1JaTnVPbWZrUU1VL2ZZQ3ZZNzFpZ01JT2JFcGcK",
       "endpoints": [
         "https://github.com/keroro7539511/pm-system/releases/latest/download/latest.json"
       ]
