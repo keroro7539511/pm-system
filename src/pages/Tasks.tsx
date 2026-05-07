@@ -91,6 +91,7 @@ export function Tasks() {
   const isLoading = tasksLoading || projectsLoading;
 
   const filteredTasks = useMemo(() => {
+    const PRIORITY_ORDER: Record<string, number> = { P0: 0, P1: 1, P2: 2, P3: 3 };
     let result = selectedProjectId !== null
       ? tasks.filter((t) => t.project_id === selectedProjectId)
       : tasks;
@@ -102,7 +103,12 @@ export function Tasks() {
         (t.assignee ?? "").toLowerCase().includes(q)
       );
     }
-    return result;
+    return [...result].sort((a, b) => {
+      const aDone = a.status === "done" ? 1 : 0;
+      const bDone = b.status === "done" ? 1 : 0;
+      if (aDone !== bDone) return aDone - bDone;
+      return (PRIORITY_ORDER[a.priority] ?? 9) - (PRIORITY_ORDER[b.priority] ?? 9);
+    });
   }, [tasks, selectedProjectId, searchQuery]);
 
   function taskBasePayload(task: Task) {
@@ -125,6 +131,10 @@ export function Tasks() {
 
   function handleGoalChange(task: Task, goalId: number | null) {
     updateTask.mutate({ id: task.id, payload: { ...taskBasePayload(task), goal_id: goalId } });
+  }
+
+  function handlePriorityChange(task: Task, priority: import("@/types").Priority) {
+    updateTask.mutate({ id: task.id, payload: { ...taskBasePayload(task), priority } });
   }
 
   function handleEdit(task: Task) {
@@ -335,7 +345,7 @@ export function Tasks() {
           ) : (
             <>
               <TabsContent value="list" className="flex-1 overflow-auto min-h-0 mt-3">
-                <TaskList tasks={filteredTasks} onEdit={handleEdit} onDelete={setDeletingTask} onStatusChange={handleStatusChange} onGoalChange={handleGoalChange} />
+                <TaskList tasks={filteredTasks} onEdit={handleEdit} onDelete={setDeletingTask} onStatusChange={handleStatusChange} onGoalChange={handleGoalChange} onPriorityChange={handlePriorityChange} />
               </TabsContent>
               <TabsContent value="kanban" className="flex-1 overflow-hidden min-h-0 mt-3">
                 <KanbanBoard tasks={filteredTasks} onEdit={handleEdit} onDelete={setDeletingTask} />
