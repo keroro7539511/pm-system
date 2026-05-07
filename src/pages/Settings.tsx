@@ -102,9 +102,10 @@ export function Settings() {
         setUpdateStatus("up-to-date");
         setTimeout(() => setUpdateStatus("idle"), 3000);
       }
-    } catch {
+    } catch (e) {
       setUpdateStatus("error");
-      setTimeout(() => setUpdateStatus("idle"), 4000);
+      setUpdateNotes(String(e));
+      setTimeout(() => { setUpdateStatus("idle"); setUpdateNotes(null); }, 6000);
     }
   }
 
@@ -431,9 +432,14 @@ export function Settings() {
           </div>
         )}
         {updateStatus === "error" && (
-          <p className="flex items-center gap-1.5 text-xs text-danger">
-            <XCircle className="w-3.5 h-3.5" /> 檢查失敗，請確認網路連線
-          </p>
+          <div className="flex flex-col gap-1">
+            <p className="flex items-center gap-1.5 text-xs text-danger">
+              <XCircle className="w-3.5 h-3.5" /> 檢查失敗，請確認網路連線
+            </p>
+            {updateNotes && (
+              <p className="text-[11px] text-text-muted font-mono break-all">{updateNotes}</p>
+            )}
+          </div>
         )}
       </section>
 
