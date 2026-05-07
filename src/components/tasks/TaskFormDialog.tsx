@@ -76,7 +76,7 @@ export function TaskFormDialog({ open, onOpenChange, task, defaultProjectId, onS
         description: task.description ?? "",
         project_id: task.project_id ? String(task.project_id) : "none",
         goal_id: task.goal_id ? String(task.goal_id) : "none",
-        assignee: task.assignee ?? "",
+        assignee: task.assignee ?? "none",
         priority: task.priority as Priority,
         status: task.status as TaskStatus,
         start_date: task.start_date ?? "",
@@ -88,7 +88,7 @@ export function TaskFormDialog({ open, onOpenChange, task, defaultProjectId, onS
         title: "", description: "",
         project_id: defaultProjectId ? String(defaultProjectId) : "none",
         goal_id: "none",
-        assignee: "",
+        assignee: "none",
         priority: "P2", status: "todo", start_date: today, due_date: "",
       });
     }
@@ -295,7 +295,7 @@ export function TaskFormDialog({ open, onOpenChange, task, defaultProjectId, onS
                 control={form.control}
                 name="assignee"
                 render={({ field }) => (
-                  <Select value={field.value ?? "none"} onValueChange={field.onChange}>
+                  <Select value={field.value} onValueChange={field.onChange}>
                     <SelectTrigger><SelectValue placeholder="（未指定）" /></SelectTrigger>
                     <SelectContent className="max-h-56 overflow-y-auto">
                       <SelectItem value="none">— 未指定 —</SelectItem>
