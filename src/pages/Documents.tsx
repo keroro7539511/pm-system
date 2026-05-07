@@ -188,6 +188,9 @@ export function Documents() {
   const [csvImporting, setCsvImporting]                    = useState(false);
   const [csvResult, setCsvResult]                          = useState<{ ok: number; fail: number } | null>(null);
   const csvInputRef = useRef<HTMLInputElement>(null);
+  const [contactCsvImporting, setContactCsvImporting]      = useState(false);
+  const [contactCsvResult, setContactCsvResult]            = useState<{ ok: number; fail: number } | null>(null);
+  const contactCsvInputRef = useRef<HTMLInputElement>(null);
 
   const { data: docs = [], isLoading: docsLoading }         = useDocuments(debouncedSearch || undefined);
   const { data: contacts = [], isLoading: contactsLoading } = useContacts(null, debouncedContactSearch || undefined);
@@ -336,6 +339,64 @@ export function Documents() {
     if (!selectedEmployee) return;
     deleteEmployee.mutate(selectedEmployee.id, {
       onSuccess: () => { setSelectedEmployee(null); setEmployeeDeleteConfirm(false); },
+    });
+  }
+
+  function handleContactCsvExport() {
+    const rows = contacts.map((c) => ({
+      name:            c.name,
+      email:           c.email           ?? "",
+      phone:           c.phone           ?? "",
+      company_name:    c.company_name    ?? "",
+      company_address: c.company_address ?? "",
+      notes:           c.notes           ?? "",
+    }));
+    const csv = Papa.unparse(rows, { header: true });
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `contacts_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function handleContactCsvFile(file: File) {
+    setContactCsvImporting(true);
+    setContactCsvResult(null);
+    Papa.parse<Record<string, string>>(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: async (results) => {
+        let ok = 0;
+        let fail = 0;
+        for (const row of results.data) {
+          const name = row["name"] ?? row["姓名"] ?? row["Name"] ?? "";
+          if (!name.trim()) { fail++; continue; }
+          try {
+            await createContact.mutateAsync({
+              name:            name.trim(),
+              email:           (row["email"]           ?? row["Email"]    ?? row["信箱"] ?? "").trim() || null,
+              phone:           (row["phone"]           ?? row["Phone"]    ?? row["電話"] ?? "").trim() || null,
+              company_name:    (row["company_name"]    ?? row["公司"]     ?? "").trim() || null,
+              company_address: (row["company_address"] ?? row["地址"]     ?? "").trim() || null,
+              notes:           (row["notes"]           ?? row["備註"]     ?? "").trim() || null,
+            });
+            ok++;
+          } catch {
+            fail++;
+          }
+        }
+        setContactCsvImporting(false);
+        setContactCsvResult({ ok, fail });
+        if (contactCsvInputRef.current) contactCsvInputRef.current.value = "";
+      },
+      error: () => {
+        setContactCsvImporting(false);
+        setContactCsvResult({ ok: 0, fail: -1 });
+      },
     });
   }
 
@@ -550,10 +611,44 @@ export function Documents() {
             <div className="p-4 border-b border-border space-y-3">
               <div className="flex items-center justify-between">
                 <h1 className="text-lg font-semibold text-text-primary">客戶窗口</h1>
-                <Button size="sm" onClick={() => { setEditingContact(null); setContactFormOpen(true); }} className="h-7 px-2 text-xs">
-                  <Plus className="h-3.5 w-3.5 mr-1" />新增
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Button
+                    size="sm" variant="ghost"
+                    onClick={handleContactCsvExport}
+                    disabled={contacts.length === 0}
+                    className="h-7 px-2 text-xs gap-1"
+                    title="匯出 CSV"
+                  >
+                    <Download className="h-3.5 w-3.5" />匯出
+                  </Button>
+                  <Button
+                    size="sm" variant="ghost"
+                    onClick={() => contactCsvInputRef.current?.click()}
+                    disabled={contactCsvImporting}
+                    className="h-7 px-2 text-xs gap-1"
+                    title="從 CSV 匯入"
+                  >
+                    <Upload className="h-3.5 w-3.5" />匯入
+                  </Button>
+                  <Button size="sm" onClick={() => { setEditingContact(null); setContactFormOpen(true); }} className="h-7 px-2 text-xs">
+                    <Plus className="h-3.5 w-3.5 mr-1" />新增
+                  </Button>
+                </div>
               </div>
+              {contactCsvResult && (
+                <p className={`text-xs px-1 ${contactCsvResult.fail === -1 || (contactCsvResult.ok === 0 && contactCsvResult.fail > 0) ? "text-danger" : "text-success"}`}>
+                  {contactCsvResult.fail === -1
+                    ? "CSV 解析失敗，請確認格式"
+                    : `匯入完成：${contactCsvResult.ok} 筆成功${contactCsvResult.fail > 0 ? `，${contactCsvResult.fail} 筆失敗` : ""}`}
+                </p>
+              )}
+              <input
+                ref={contactCsvInputRef}
+                type="file"
+                accept=".csv"
+                className="hidden"
+                onChange={(e) => { if (e.target.files?.[0]) handleContactCsvFile(e.target.files[0]); }}
+              />
               <div className="relative">
                 <Search className="absolute left-2.5 top-2 h-4 w-4 text-text-muted" />
                 <Input

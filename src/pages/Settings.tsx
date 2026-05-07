@@ -61,8 +61,14 @@ export function Settings() {
     setExporting(true);
     setExportMsg(null);
     try {
-      const path = await api.reports.export();
-      setExportMsg(path);
+      const { save } = await import("@tauri-apps/plugin-dialog");
+      const savePath = await save({
+        defaultPath: `pm-backup-${new Date().toISOString().slice(0, 10)}.json`,
+        filters: [{ name: "JSON", extensions: ["json"] }],
+      });
+      if (!savePath) return;
+      await api.reports.export(savePath);
+      setExportMsg(`已匯出至 ${savePath}`);
     } catch (e) {
       setExportMsg(String(e));
     } finally {
