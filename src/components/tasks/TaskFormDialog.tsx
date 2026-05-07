@@ -237,7 +237,7 @@ export function TaskFormDialog({ open, onOpenChange, task, defaultProjectId, onS
                     form.setValue("goal_id", "none");
                   }}>
                     <SelectTrigger><SelectValue placeholder={t("projects.noProject")} /></SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="max-h-56 overflow-y-auto">
                       <SelectItem value="none">{t("projects.noProject")}</SelectItem>
                       {(projects ?? []).map((p) => (
                         <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>
@@ -262,7 +262,7 @@ export function TaskFormDialog({ open, onOpenChange, task, defaultProjectId, onS
                     <SelectTrigger>
                       <SelectValue placeholder={hasGoals ? "選擇目標" : "無可用目標"} />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="max-h-56 overflow-y-auto">
                       <SelectItem value="none">— 不指定 —</SelectItem>
                       {specificGoals.length > 0 && (
                         <>
