@@ -107,7 +107,9 @@ export function Tasks() {
       const aDone = a.status === "done" ? 1 : 0;
       const bDone = b.status === "done" ? 1 : 0;
       if (aDone !== bDone) return aDone - bDone;
-      return (PRIORITY_ORDER[a.priority] ?? 9) - (PRIORITY_ORDER[b.priority] ?? 9);
+      const prioDiff = (PRIORITY_ORDER[a.priority] ?? 9) - (PRIORITY_ORDER[b.priority] ?? 9);
+      if (prioDiff !== 0) return prioDiff;
+      return b.created_at.localeCompare(a.created_at);
     });
   }, [tasks, selectedProjectId, searchQuery]);
 

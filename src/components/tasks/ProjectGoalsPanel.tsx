@@ -113,7 +113,11 @@ function GoalItem({
 }
 
 export function ProjectGoalsPanel({ project, onClose }: Props) {
-  const { data: goals = [] } = useProjectGoals(project.id);
+  const { data: rawGoals = [] } = useProjectGoals(project.id);
+  const goals = [...rawGoals].sort((a, b) => {
+    if (a.is_done !== b.is_done) return a.is_done ? 1 : -1;
+    return b.id - a.id;
+  });
   const createGoal = useCreateGoal();
   const [newTitle, setNewTitle] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
