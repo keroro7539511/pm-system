@@ -138,7 +138,7 @@ pub struct ExportData {
 }
 
 #[tauri::command]
-pub async fn export_data(app: tauri::AppHandle, pool: State<'_, DbPool>) -> CmdResult<String> {
+pub async fn export_data(save_path: String, pool: State<'_, DbPool>) -> CmdResult<()> {
     let conn = pool.get().map_err(|e| e.to_string())?;
 
     fn query_json(conn: &rusqlite::Connection, sql: &str) -> serde_json::Value {
@@ -178,13 +178,8 @@ pub async fn export_data(app: tauri::AppHandle, pool: State<'_, DbPool>) -> CmdR
     };
 
     let json = serde_json::to_string_pretty(&export).map_err(|e| e.to_string())?;
-
-    let export_path = app.path().app_data_dir()
-        .map(|d| d.join(format!("backup_{}.json", Local::now().format("%Y%m%d_%H%M%S"))))
-        .map_err(|e| e.to_string())?;
-
-    std::fs::write(&export_path, &json).map_err(|e| e.to_string())?;
-    Ok(export_path.display().to_string())
+    std::fs::write(&save_path, json).map_err(|e| e.to_string())?;
+    Ok(())
 }
 
 #[tauri::command]

@@ -107,7 +107,7 @@ export const api = {
 
   reports: {
     weekly: () => invoke<WeeklyReport>("generate_weekly_report"),
-    export: () => invoke<string>("export_data"),
+    export: (savePath: string) => invoke<void>("export_data", { savePath }),
     checkUpdates: () => invoke<string>("check_for_updates"),
   },
 
