@@ -20,7 +20,7 @@ export function Dashboard() {
       <div className="grid grid-cols-4 gap-4">
         <KpiCard
           title={t("dashboard.kpi.totalTasks")}
-          value={stats?.total ?? 8}
+          value={stats?.total ?? 0}
           icon={ListTodo}
           color="text-primary"
           bgColor="bg-primary/10"
@@ -30,7 +30,7 @@ export function Dashboard() {
         />
         <KpiCard
           title={t("dashboard.kpi.doneTasks")}
-          value={stats?.done ?? 1}
+          value={stats?.done ?? 0}
           icon={CheckCircle}
           color="text-success"
           bgColor="bg-success/10"
@@ -40,7 +40,7 @@ export function Dashboard() {
         />
         <KpiCard
           title={t("dashboard.kpi.inProgress")}
-          value={stats?.in_progress ?? 2}
+          value={stats?.in_progress ?? 0}
           icon={Clock}
           color="text-primary"
           bgColor="bg-primary/10"

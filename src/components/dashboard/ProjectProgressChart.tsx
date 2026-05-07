@@ -19,10 +19,15 @@ export function ProjectProgressChart({ projects }: ProjectProgressChartProps) {
   }));
 
   if (data.length === 0) {
-    data.push(
-      { name: "ERP 導入", progress: 65 },
-      { name: "官網改版", progress: 40 },
-      { name: "CRM 整合", progress: 20 },
+    return (
+      <Card className="animate-fade-in-delay-4">
+        <CardHeader>
+          <CardTitle>{t("dashboard.charts.projectProgress")}</CardTitle>
+        </CardHeader>
+        <div className="flex items-center justify-center h-[180px] text-text-muted text-sm">
+          {t("dashboard.noProjects", "尚無專案")}
+        </div>
+      </Card>
     );
   }
 
