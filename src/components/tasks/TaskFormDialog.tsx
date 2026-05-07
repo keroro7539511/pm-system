@@ -297,7 +297,7 @@ export function TaskFormDialog({ open, onOpenChange, task, defaultProjectId, onS
                 render={({ field }) => (
                   <Select value={field.value ?? "none"} onValueChange={field.onChange}>
                     <SelectTrigger><SelectValue placeholder="（未指定）" /></SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="max-h-56 overflow-y-auto">
                       <SelectItem value="none">— 未指定 —</SelectItem>
                       {employees.map((e) => (
                         <SelectItem key={e.id} value={e.name}>{e.name}{e.department ? ` · ${e.department}` : ""}</SelectItem>
