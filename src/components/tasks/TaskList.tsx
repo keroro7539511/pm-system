@@ -34,13 +34,13 @@ export function TaskList({ tasks, onEdit, onDelete, onStatusChange, onGoalChange
 
   return (
     <div className="overflow-auto">
-      <table className="w-full text-sm">
+      <table className="w-full text-sm table-fixed">
         <thead>
           <tr className="border-b border-border text-[11px] text-text-muted">
             <th className="pb-2 text-left font-medium pl-2 w-6"></th>
             <th className="pb-2 text-left font-medium">{t("tasks.fields.title")}</th>
             <th className="pb-2 text-left font-medium w-20">{t("tasks.fields.priority")}</th>
-            <th className="pb-2 text-left font-medium w-24">{t("tasks.fields.status")}</th>
+            <th className="pb-2 text-left font-medium w-28">{t("tasks.fields.status")}</th>
             <th className="pb-2 text-left font-medium w-40">所屬目標</th>
             <th className="pb-2 text-left font-medium w-24">{t("tasks.fields.dueDate")}</th>
             <th className="pb-2 text-left font-medium w-20">{t("tasks.fields.assignee")}</th>
@@ -58,12 +58,12 @@ export function TaskList({ tasks, onEdit, onDelete, onStatusChange, onGoalChange
                 <td className="py-2 pl-2">
                   <PriorityIcon priority={task.priority} />
                 </td>
-                <td className="py-2 pr-4">
-                  <p className={cn("font-medium text-text-primary truncate max-w-xs", overdue && "text-danger/90")}>
+                <td className="py-2 pr-4 min-w-0 overflow-hidden">
+                  <p className={cn("font-medium text-text-primary truncate", overdue && "text-danger/90")}>
                     {task.title}
                   </p>
                   {task.description && (
-                    <p className="text-[11px] text-text-muted truncate max-w-xs mt-0.5">{task.description}</p>
+                    <p className="text-[11px] text-text-muted truncate mt-0.5">{task.description}</p>
                   )}
                 </td>
                 <td className="py-2">
