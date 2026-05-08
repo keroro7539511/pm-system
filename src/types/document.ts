@@ -39,6 +39,9 @@ export interface WeeklyReport {
   tasks_overdue: number;
   emails_received: number;
   emails_replied: number;
+  emails_done: number;
+  emails_pending: number;
+  emails_converted: number;
   active_projects: ProjectSummary[];
   highlights: string[];
 }

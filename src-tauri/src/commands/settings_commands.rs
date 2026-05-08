@@ -22,6 +22,8 @@ pub struct AppSettings {
     pub my_email: String,
     #[serde(default)]
     pub email_blacklist_domains: String, // 換行分隔，例："spam.com\nads.net"
+    #[serde(default)]
+    pub use_outlook: bool,
 }
 
 fn default_ai_provider() -> String {
@@ -43,6 +45,7 @@ impl Default for AppSettings {
             task_assign_webhook_url: String::new(),
             my_email: String::new(),
             email_blacklist_domains: String::new(),
+            use_outlook: false,
         }
     }
 }

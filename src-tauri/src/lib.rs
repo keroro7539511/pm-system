@@ -61,6 +61,7 @@ pub fn run() {
             // Reports
             commands::reports_commands::generate_weekly_report,
             commands::reports_commands::export_data,
+            commands::reports_commands::export_weekly_excel,
             commands::reports_commands::check_for_updates,
             // Settings
             commands::settings_commands::get_settings,
@@ -79,6 +80,7 @@ pub fn run() {
             commands::employees_commands::delete_employee,
             // Notifications
             commands::notify_commands::notify_task_assigned,
+            commands::outlook_commands::send_outlook_email,
             // AI
             commands::ai_commands::generate_email_draft,
             // Attachments

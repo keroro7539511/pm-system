@@ -1,7 +1,9 @@
 import { useState, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
-import { Loader2 } from "lucide-react";
+import { Loader2, ShieldOff } from "lucide-react";
+import { useSettingsStore } from "@/stores/settingsStore";
+import { toast } from "@/stores/toastStore";
 import Papa from "papaparse";
 import { ClientList } from "@/components/emails/ClientList";
 import { EmailList } from "@/components/emails/EmailList";
@@ -33,6 +35,11 @@ export function Emails() {
 
   // Email delete state
   const [deletingEmail, setDeletingEmail] = useState<Email | undefined>();
+
+  // Block domain state
+  const [blockingDomain, setBlockingDomain] = useState<{ email: Email; domain: string } | null>(null);
+  const settings = useSettingsStore((s) => s.settings);
+  const updateSettings = useSettingsStore((s) => s.update);
 
   const clientId = selectedClient && selectedClient.id > 0 ? selectedClient.id : undefined;
   const { data: emails = [], isLoading: emailsLoading } = useEmails(clientId);
@@ -112,6 +119,42 @@ export function Emails() {
         setDeletingEmail(undefined);
       },
     });
+  }
+
+  function extractDomain(sender: string | null): string {
+    if (!sender) return "";
+    const m = sender.match(/@([a-zA-Z0-9._-]+)/);
+    return m ? m[1].toLowerCase() : "";
+  }
+
+  function handleBlockDomain(email: Email) {
+    const domain = extractDomain(email.sender);
+    if (!domain) {
+      toast("無法從寄件者解析 Domain", "error");
+      return;
+    }
+    setBlockingDomain({ email, domain });
+  }
+
+  function handleBlockDomainConfirm() {
+    if (!blockingDomain) return;
+    const { domain } = blockingDomain;
+    const existing = settings.email_blacklist_domains
+      .split("\n")
+      .map((d) => d.trim())
+      .filter(Boolean);
+    if (existing.includes(domain)) {
+      toast(`${domain} 已在封鎖清單中`, "info");
+      setBlockingDomain(null);
+      return;
+    }
+    const updated = { ...settings, email_blacklist_domains: [...existing, domain].join("\n") };
+    updateSettings(updated)
+      .then(() => {
+        toast(`已封鎖 ${domain}`, "success");
+        setBlockingDomain(null);
+      })
+      .catch((e: unknown) => toast(`儲存失敗：${String(e)}`, "error"));
   }
 
   function handleCsvExport() {
@@ -246,6 +289,7 @@ export function Emails() {
             selectedId={selectedEmail?.id ?? null}
             onSelect={setSelectedEmail}
             onDelete={handleEmailDelete}
+            onBlockDomain={handleBlockDomain}
           />
         )}
       </div>
@@ -266,6 +310,33 @@ export function Emails() {
         onSubmit={handleClientSubmit}
         loading={createClient.isPending || updateClient.isPending}
       />
+
+      {/* 封鎖 Domain 確認 */}
+      <Dialog open={!!blockingDomain} onOpenChange={(open) => !open && setBlockingDomain(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShieldOff className="w-4 h-4 text-warning" />
+              封鎖 Domain
+            </DialogTitle>
+            <DialogDescription>
+              封鎖後，來自此 Domain 的新信件將不會進入資料庫。
+            </DialogDescription>
+          </DialogHeader>
+          {blockingDomain && (
+            <div className="rounded-lg border border-border bg-layer-2 px-4 py-3 text-sm space-y-1">
+              <p><span className="text-text-muted">寄件者：</span><span className="text-text-primary">{blockingDomain.email.sender ?? "—"}</span></p>
+              <p><span className="text-text-muted">Domain：</span><span className="text-warning font-medium">{blockingDomain.domain}</span></p>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setBlockingDomain(null)}>取消</Button>
+            <Button variant="destructive" onClick={handleBlockDomainConfirm}>
+              確認封鎖
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* 刪除客戶確認 */}
       <Dialog open={!!deletingClient} onOpenChange={(open) => !open && setDeletingClient(undefined)}>

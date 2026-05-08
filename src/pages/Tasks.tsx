@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
+import { useSettingsStore } from "@/stores/settingsStore";
 import { api } from "@/lib/tauri";
 import { toast } from "@/stores/toastStore";
 import { List, Kanban, Loader2, FolderPlus, CheckCircle2, Clock, Pencil, Trash2, Target } from "lucide-react";
@@ -67,6 +68,7 @@ function ProjectChip({
 
 export function Tasks() {
   const { t } = useTranslation();
+  const settings = useSettingsStore((s) => s.settings);
   const { data: tasks = [], isLoading: tasksLoading } = useTasks();
   const { data: projects = [], isLoading: projectsLoading } = useProjects();
   const createTask = useCreateTask();
@@ -87,6 +89,9 @@ export function Tasks() {
   const [editingProject, setEditingProject] = useState<Project | undefined>();
   const [deletingProject, setDeletingProject] = useState<Project | undefined>();
   const [goalsOpen, setGoalsOpen] = useState(false);
+  const [notifyPending, setNotifyPending] = useState<{
+    to: string; assignee: string; subject: string; body: string;
+  } | null>(null);
 
   const isLoading = tasksLoading || projectsLoading;
 
@@ -154,6 +159,27 @@ export function Tasks() {
       const projectName = task.project_id
         ? (projects.find((p) => p.id === task.project_id)?.name ?? null)
         : null;
+
+      // Outlook email via PowerShell — ask for confirmation first
+      if (settings.use_outlook && task.assignee && assigneeEmail) {
+        const subject = `[任務分派] ${task.title}`;
+        const body = [
+          `您好，${task.assignee}，`,
+          ``,
+          `您已被指派以下任務：`,
+          ``,
+          `任務：${task.title}`,
+          task.description ? `說明：${task.description}` : null,
+          projectName ? `專案：${projectName}` : null,
+          `優先度：${task.priority}`,
+          task.due_date ? `截止日：${task.due_date}` : null,
+          ``,
+          `此信件由 PM System 自動發送。`,
+        ].filter(Boolean).join("\n");
+
+        setNotifyPending({ to: assigneeEmail, assignee: task.assignee, subject, body });
+      }
+
       api.notifications.taskAssigned({
         taskId:        task.id,
         taskTitle:     task.title,
@@ -168,7 +194,7 @@ export function Tasks() {
       })
         .then((sent) => {
           if (!sent) {
-            if (task.assignee) {
+            if (task.assignee && !settings.use_outlook) {
               toast("任務已建立，但通知未發送 — 請至設定頁填入「任務指派通知 Webhook URL」並儲存", "info");
             }
             return;
@@ -190,6 +216,15 @@ export function Tasks() {
         onSuccess: (created) => { handleFormClose(false); sendNotify(created); },
       });
     }
+  }
+
+  function handleNotifyConfirm() {
+    if (!notifyPending) return;
+    const { to, assignee, subject, body } = notifyPending;
+    setNotifyPending(null);
+    api.outlook.sendEmail(to, subject, body)
+      .then(() => toast(`Outlook 已寄信給 ${assignee}（${to}）`, "success"))
+      .catch((e: unknown) => toast(`Outlook 寄信失敗：${String(e)}`, "error"));
   }
 
   function handleDeleteConfirm() {
@@ -373,6 +408,29 @@ export function Tasks() {
         onSubmit={handleFormSubmit}
         loading={createTask.isPending || updateTask.isPending}
       />
+
+      {/* Outlook notify confirmation */}
+      <Dialog open={!!notifyPending} onOpenChange={(open) => !open && setNotifyPending(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>寄送通知信件</DialogTitle>
+            <DialogDescription>
+              是否透過 Outlook 寄信通知負責人？
+            </DialogDescription>
+          </DialogHeader>
+          {notifyPending && (
+            <div className="rounded-lg border border-border bg-layer-2 px-4 py-3 text-sm space-y-1">
+              <p><span className="text-text-muted">收件人：</span><span className="text-text-primary">{notifyPending.assignee}</span></p>
+              <p><span className="text-text-muted">Email：</span><span className="text-text-primary">{notifyPending.to}</span></p>
+              <p><span className="text-text-muted">主旨：</span><span className="text-text-primary">{notifyPending.subject}</span></p>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setNotifyPending(null)}>跳過</Button>
+            <Button onClick={handleNotifyConfirm}>寄送</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete confirmation */}
       <Dialog open={!!deletingTask} onOpenChange={(open) => !open && setDeletingTask(undefined)}>

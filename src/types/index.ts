@@ -20,6 +20,7 @@ export interface AppSettings {
   task_assign_webhook_url: string;
   my_email: string;
   email_blacklist_domains: string;
+  use_outlook: boolean;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -35,4 +36,5 @@ export const DEFAULT_SETTINGS: AppSettings = {
   task_assign_webhook_url: "",
   my_email: "",
   email_blacklist_domains: "",
+  use_outlook: false,
 };

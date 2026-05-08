@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Inbox, X } from "lucide-react";
+import { Inbox, X, ShieldOff } from "lucide-react";
 import { cn, formatDate } from "@/lib/utils";
 import type { Email, EmailStatus } from "@/types";
 
@@ -8,6 +8,7 @@ interface EmailListProps {
   selectedId: number | null;
   onSelect: (email: Email) => void;
   onDelete: (email: Email) => void;
+  onBlockDomain?: (email: Email) => void;
 }
 
 const STATUS_STYLE: Record<EmailStatus, string> = {
@@ -25,7 +26,7 @@ const CATEGORY_LABEL: Record<string, string> = {
   other: "其他",
 };
 
-export function EmailList({ emails, selectedId, onSelect, onDelete }: EmailListProps) {
+export function EmailList({ emails, selectedId, onSelect, onDelete, onBlockDomain }: EmailListProps) {
   const { t, i18n } = useTranslation();
 
   if (emails.length === 0) {
@@ -69,18 +70,25 @@ export function EmailList({ emails, selectedId, onSelect, onDelete }: EmailListP
             </p>
           </button>
 
-          {/* 刪除按鈕（hover 顯示） */}
-          <button
-            onClick={(e) => { e.stopPropagation(); onDelete(email); }}
-            className={cn(
-              "opacity-0 group-hover:opacity-100 transition-opacity",
-              "flex items-center justify-center w-8 shrink-0",
-              "text-text-muted hover:text-danger"
+          {/* 動作按鈕（hover 顯示） */}
+          <div className="opacity-0 group-hover:opacity-100 transition-opacity flex flex-col shrink-0">
+            {onBlockDomain && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onBlockDomain(email); }}
+                className="flex items-center justify-center w-8 flex-1 text-text-muted hover:text-warning"
+                title="封鎖 Domain"
+              >
+                <ShieldOff className="w-3.5 h-3.5" />
+              </button>
             )}
-            title="刪除信件"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); onDelete(email); }}
+              className="flex items-center justify-center w-8 flex-1 text-text-muted hover:text-danger"
+              title="刪除信件"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
       ))}
     </div>

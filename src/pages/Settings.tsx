@@ -318,6 +318,16 @@ export function Settings() {
             onCheckedChange={(v) => set("notifications_enabled", v)}
           />
         </div>
+        <div className="flex items-center justify-between">
+          <div>
+            <Label className="text-text-secondary text-sm">使用本機 Outlook 寄信</Label>
+            <p className="text-xs text-text-muted mt-0.5">分派任務時透過 PowerShell 呼叫本機 Outlook 自動寄出通知（僅限 Windows）</p>
+          </div>
+          <Switch
+            checked={form.use_outlook}
+            onCheckedChange={(v) => set("use_outlook", v)}
+          />
+        </div>
       </section>
 
       {/* Appearance */}

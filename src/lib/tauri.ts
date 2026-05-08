@@ -108,6 +108,7 @@ export const api = {
   reports: {
     weekly: () => invoke<WeeklyReport>("generate_weekly_report"),
     export: (savePath: string) => invoke<void>("export_data", { savePath }),
+    exportExcel: (savePath: string) => invoke<void>("export_weekly_excel", { savePath }),
     checkUpdates: () => invoke<string>("check_for_updates"),
   },
 
@@ -115,6 +116,11 @@ export const api = {
     get: () => invoke<AppSettings>("get_settings"),
     save: (settings: AppSettings) => invoke<void>("save_settings", { settings }),
     testN8n: (url: string) => invoke<boolean>("test_n8n_connection", { url }),
+  },
+
+  outlook: {
+    sendEmail: (to: string, subject: string, body: string) =>
+      invoke<void>("send_outlook_email", { to, subject, body }),
   },
 
   notifications: {
