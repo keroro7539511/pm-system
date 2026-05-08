@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import type { Task, Priority, TaskStatus, CreateTaskPayload } from "@/types";
 import { useProjects } from "@/hooks/useProjects";
 import { useEmployees } from "@/hooks/useEmployees";
@@ -194,14 +194,11 @@ export function TaskFormDialog({ open, onOpenChange, task, defaultProjectId, onS
                 control={form.control}
                 name="priority"
                 render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {PRIORITIES.map((p) => (
-                        <SelectItem key={p} value={p}>{p} · {t(`tasks.priority.${p}`)}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <SearchableSelect
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    options={PRIORITIES.map((p) => ({ value: p, label: `${p} · ${t(`tasks.priority.${p}`)}` }))}
+                  />
                 )}
               />
             </div>
@@ -212,14 +209,11 @@ export function TaskFormDialog({ open, onOpenChange, task, defaultProjectId, onS
                 control={form.control}
                 name="status"
                 render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {STATUSES.map((s) => (
-                        <SelectItem key={s} value={s}>{t(`tasks.status.${s}`)}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <SearchableSelect
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    options={STATUSES.map((s) => ({ value: s, label: t(`tasks.status.${s}`) }))}
+                  />
                 )}
               />
             </div>
@@ -232,18 +226,15 @@ export function TaskFormDialog({ open, onOpenChange, task, defaultProjectId, onS
                 control={form.control}
                 name="project_id"
                 render={({ field }) => (
-                  <Select value={field.value} onValueChange={(v) => {
-                    field.onChange(v);
-                    form.setValue("goal_id", "none");
-                  }}>
-                    <SelectTrigger><SelectValue placeholder={t("projects.noProject")} /></SelectTrigger>
-                    <SelectContent className="max-h-56 overflow-y-auto">
-                      <SelectItem value="none">{t("projects.noProject")}</SelectItem>
-                      {(projects ?? []).map((p) => (
-                        <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <SearchableSelect
+                    value={field.value ?? "none"}
+                    onValueChange={(v) => { field.onChange(v); form.setValue("goal_id", "none"); }}
+                    options={[
+                      { value: "none", label: t("projects.noProject") },
+                      ...(projects ?? []).map((p) => ({ value: String(p.id), label: p.name })),
+                    ]}
+                    placeholder={t("projects.noProject")}
+                  />
                 )}
               />
             </div>
@@ -254,35 +245,17 @@ export function TaskFormDialog({ open, onOpenChange, task, defaultProjectId, onS
                 control={form.control}
                 name="goal_id"
                 render={({ field }) => (
-                  <Select
+                  <SearchableSelect
                     value={field.value ?? "none"}
                     onValueChange={field.onChange}
                     disabled={!hasGoals}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={hasGoals ? "選擇目標" : "無可用目標"} />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-56 overflow-y-auto">
-                      <SelectItem value="none">— 不指定 —</SelectItem>
-                      {specificGoals.length > 0 && (
-                        <>
-                          <div className="px-2 py-1 text-[10px] text-text-muted uppercase tracking-wider">專案目標</div>
-                          {specificGoals.map((g) => (
-                            <SelectItem key={g.id} value={String(g.id)}>{g.title}</SelectItem>
-                          ))}
-                        </>
-                      )}
-                      {globalGoals.length > 0 && (
-                        <>
-                          {specificGoals.length > 0 && <div className="mx-1 my-1 h-px bg-border/50" />}
-                          <div className="px-2 py-1 text-[10px] text-text-muted uppercase tracking-wider">🌐 全部專案適用</div>
-                          {globalGoals.map((g) => (
-                            <SelectItem key={g.id} value={String(g.id)}>{g.title}</SelectItem>
-                          ))}
-                        </>
-                      )}
-                    </SelectContent>
-                  </Select>
+                    placeholder={hasGoals ? "選擇目標" : "無可用目標"}
+                    groups={[
+                      { label: "", options: [{ value: "none", label: "— 不指定 —" }] },
+                      ...(specificGoals.length > 0 ? [{ label: "專案目標", options: specificGoals.map((g) => ({ value: String(g.id), label: g.title })) }] : []),
+                      ...(globalGoals.length > 0 ? [{ label: "🌐 全部專案適用", options: globalGoals.map((g) => ({ value: String(g.id), label: g.title })) }] : []),
+                    ]}
+                  />
                 )}
               />
             </div>
@@ -295,15 +268,15 @@ export function TaskFormDialog({ open, onOpenChange, task, defaultProjectId, onS
                 control={form.control}
                 name="assignee"
                 render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger><SelectValue placeholder="（未指定）" /></SelectTrigger>
-                    <SelectContent className="max-h-56 overflow-y-auto">
-                      <SelectItem value="none">— 未指定 —</SelectItem>
-                      {employees.map((e) => (
-                        <SelectItem key={e.id} value={e.name}>{e.name}{e.department ? ` · ${e.department}` : ""}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <SearchableSelect
+                    value={field.value ?? "none"}
+                    onValueChange={field.onChange}
+                    placeholder="（未指定）"
+                    options={[
+                      { value: "none", label: "— 未指定 —" },
+                      ...employees.map((e) => ({ value: e.name, label: e.name, sub: e.department ?? undefined })),
+                    ]}
+                  />
                 )}
               />
               {assigneeHasNoEmail && (
