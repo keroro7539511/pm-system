@@ -14,8 +14,9 @@ import { Goals } from "@/pages/Goals";
 import { Settings } from "@/pages/Settings";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { TaskFormDialog } from "@/components/tasks/TaskFormDialog";
+import { StartupTasksModal } from "@/components/shared/StartupTasksModal";
 import { Toaster } from "@/components/ui/Toaster";
-import { useCreateTask } from "@/hooks/useTasks";
+import { useCreateTask, useTasks } from "@/hooks/useTasks";
 import type { CreateTaskPayload } from "@/types";
 
 const queryClient = new QueryClient({
@@ -27,11 +28,19 @@ const queryClient = new QueryClient({
 function AppShell() {
   const loadSettings = useSettingsStore((s) => s.load);
   const [newTaskOpen, setNewTaskOpen] = useState(false);
+  const [startupOpen, setStartupOpen] = useState(false);
   const createTask = useCreateTask();
+  const { data: tasks = [] } = useTasks();
 
   useEffect(() => {
     void loadSettings();
   }, [loadSettings]);
+
+  useEffect(() => {
+    if (tasks.length >= 0) {
+      setStartupOpen(true);
+    }
+  }, []);
 
   function handleCreateTask(data: CreateTaskPayload) {
     createTask.mutate(data, { onSuccess: () => setNewTaskOpen(false) });
@@ -57,6 +66,9 @@ function AppShell() {
         <StatusBar />
       </div>
       <Toaster />
+      {startupOpen && (
+        <StartupTasksModal tasks={tasks} onClose={() => setStartupOpen(false)} />
+      )}
       <TaskFormDialog
         open={newTaskOpen}
         onOpenChange={setNewTaskOpen}
