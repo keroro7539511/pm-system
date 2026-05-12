@@ -21,6 +21,8 @@ export interface AppSettings {
   my_email: string;
   email_blacklist_domains: string;
   use_outlook: boolean;
+  gmail_client_id: string;
+  gmail_client_secret: string;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -37,4 +39,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
   my_email: "",
   email_blacklist_domains: "",
   use_outlook: false,
+  gmail_client_id: "",
+  gmail_client_secret: "",
 };

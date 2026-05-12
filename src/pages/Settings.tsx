@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { CheckCircle2, XCircle, Download, AlertTriangle, RefreshCw, ArrowDownToLine } from "lucide-react";
+import { CheckCircle2, XCircle, Download, AlertTriangle, RefreshCw, ArrowDownToLine, Mail, Loader2, Unlink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +20,10 @@ export function Settings() {
   const [taskWebhookStatus, setTaskWebhookStatus] = useState<"idle" | "testing" | "ok" | "fail">("idle");
   const [exporting, setExporting] = useState(false);
   const [exportMsg, setExportMsg] = useState<string | null>(null);
+  const [gmailStatus, setGmailStatus] = useState<{ connected: boolean; email: string | null } | null>(null);
+  const [gmailLoading, setGmailLoading] = useState(false);
+  const [gmailSyncing, setGmailSyncing] = useState(false);
+  const [gmailMsg, setGmailMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
 
   type UpdateStatus = "idle" | "checking" | "up-to-date" | "available" | "downloading" | "error";
   const [updateStatus, setUpdateStatus] = useState<UpdateStatus>("idle");
@@ -41,6 +45,43 @@ export function Settings() {
       .then(setCurrentVersion)
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    api.gmail.getStatus().then(setGmailStatus).catch(() => {});
+  }, []);
+
+  async function handleGmailConnect() {
+    setGmailLoading(true);
+    setGmailMsg(null);
+    try {
+      const status = await api.gmail.startAuth();
+      setGmailStatus(status);
+      setGmailMsg({ type: "ok", text: `已連接：${status.email ?? "未知帳號"}` });
+    } catch (e) {
+      setGmailMsg({ type: "err", text: String(e) });
+    } finally {
+      setGmailLoading(false);
+    }
+  }
+
+  async function handleGmailSync() {
+    setGmailSyncing(true);
+    setGmailMsg(null);
+    try {
+      const n = await api.gmail.sync();
+      setGmailMsg({ type: "ok", text: n > 0 ? `同步完成，新增 ${n} 封信件` : "已是最新，無新信件" });
+    } catch (e) {
+      setGmailMsg({ type: "err", text: String(e) });
+    } finally {
+      setGmailSyncing(false);
+    }
+  }
+
+  async function handleGmailDisconnect() {
+    await api.gmail.disconnect();
+    setGmailStatus({ connected: false, email: null });
+    setGmailMsg(null);
+  }
 
   function set<K extends keyof AppSettings>(key: K, value: AppSettings[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -242,6 +283,86 @@ export function Settings() {
           )}
           <p className="text-xs text-text-muted">指派任務時，自動 POST 到此 n8n Webhook 以發送 Email 通知</p>
         </div>
+      </section>
+
+      {/* Gmail Direct Integration */}
+      <section className="glass-card p-4 flex flex-col gap-4">
+        <h2 className="text-sm font-semibold text-text-primary">Gmail 直接整合（不需 n8n）</h2>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="flex flex-col gap-1.5">
+            <Label>Client ID</Label>
+            <Input
+              value={form.gmail_client_id}
+              onChange={(e) => set("gmail_client_id", e.target.value)}
+              placeholder="123456789-abc....apps.googleusercontent.com"
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label>Client Secret</Label>
+            <Input
+              type="password"
+              value={form.gmail_client_secret}
+              onChange={(e) => set("gmail_client_secret", e.target.value)}
+              placeholder="GOCSPX-..."
+            />
+          </div>
+        </div>
+        <p className="text-xs text-text-muted -mt-2">
+          前往 <span className="text-primary">console.cloud.google.com</span> → API 和服務 → 憑證 → 建立 OAuth 2.0 用戶端 ID（類型選「桌面應用程式」）
+        </p>
+
+        <div className="flex items-center gap-2 flex-wrap">
+          {gmailStatus?.connected ? (
+            <>
+              <div className="flex items-center gap-1.5 text-xs text-success">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                已連接：{gmailStatus.email}
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 px-3 text-xs gap-1.5"
+                onClick={handleGmailSync}
+                disabled={gmailSyncing}
+              >
+                {gmailSyncing
+                  ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />同步中...</>
+                  : <><Mail className="w-3.5 h-3.5" />立即同步</>}
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 px-3 text-xs gap-1.5 text-danger hover:text-danger"
+                onClick={handleGmailDisconnect}
+              >
+                <Unlink className="w-3.5 h-3.5" />中斷連接
+              </Button>
+            </>
+          ) : (
+            <Button
+              size="sm"
+              className="h-7 px-3 text-xs gap-1.5"
+              onClick={handleGmailConnect}
+              disabled={gmailLoading || !form.gmail_client_id || !form.gmail_client_secret}
+            >
+              {gmailLoading
+                ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />授權中...</>
+                : <><Mail className="w-3.5 h-3.5" />連接 Gmail</>}
+            </Button>
+          )}
+        </div>
+
+        {gmailMsg && (
+          <p className={`text-xs flex items-center gap-1 ${gmailMsg.type === "ok" ? "text-success" : "text-danger"}`}>
+            {gmailMsg.type === "ok"
+              ? <CheckCircle2 className="w-3.5 h-3.5" />
+              : <XCircle className="w-3.5 h-3.5" />}
+            {gmailMsg.text}
+          </p>
+        )}
+
+        <p className="text-xs text-text-muted">連接後每 5 分鐘自動同步收件匣，也可手動觸發</p>
       </section>
 
       {/* Email filtering */}

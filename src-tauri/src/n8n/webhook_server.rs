@@ -210,7 +210,6 @@ async fn handle_email(
 }
 
 fn decode_base64(s: &str) -> Result<Vec<u8>, String> {
-    use std::io::Read;
     // Remove any whitespace/newlines n8n might add
     let clean: String = s.chars().filter(|c| !c.is_ascii_whitespace()).collect();
     // Try standard then URL-safe alphabet

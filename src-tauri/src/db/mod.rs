@@ -8,6 +8,7 @@ pub mod contacts;
 pub mod documents;
 pub mod emails;
 pub mod employees;
+pub mod gmail_tokens;
 pub mod goals;
 pub mod migrations;
 pub mod projects;

@@ -1,7 +1,8 @@
-use tauri::Manager;
+use tauri::{Emitter, Manager};
 
 pub mod commands;
 pub mod db;
+pub mod gmail;
 pub mod n8n;
 pub mod tray;
 
@@ -25,6 +26,25 @@ pub fn run() {
             let secret = settings.n8n_hmac_secret.clone();
             tauri::async_runtime::spawn(async move {
                 n8n::webhook_server::start(handle, port, secret).await;
+            });
+
+            // Gmail background sync: poll every 5 minutes when connected
+            let sync_handle = app.handle().clone();
+            let sync_pool = app.state::<db::DbPool>().inner().clone();
+            tauri::async_runtime::spawn(async move {
+                let mut interval =
+                    tokio::time::interval(std::time::Duration::from_secs(300));
+                loop {
+                    interval.tick().await;
+                    if db::gmail_tokens::get(&sync_pool).ok().flatten().is_some() {
+                        match gmail::sync::sync_emails(&sync_handle, &sync_pool).await {
+                            Ok(n) if n > 0 => {
+                                let _ = sync_handle.emit("email:received", ());
+                            }
+                            _ => {}
+                        }
+                    }
+                }
             });
 
             Ok(())
@@ -93,6 +113,11 @@ pub fn run() {
             commands::goals_commands::create_project_goal,
             commands::goals_commands::update_project_goal,
             commands::goals_commands::delete_project_goal,
+            // Gmail
+            commands::gmail_commands::gmail_start_auth,
+            commands::gmail_commands::gmail_get_status,
+            commands::gmail_commands::gmail_sync,
+            commands::gmail_commands::gmail_disconnect,
         ])
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {

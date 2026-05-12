@@ -609,26 +609,26 @@ export function Documents() {
           {/* Sidebar */}
           <div className="w-72 shrink-0 border-r border-border flex flex-col bg-sidebar">
             <div className="p-4 border-b border-border space-y-3">
-              <div className="flex items-center justify-between">
-                <h1 className="text-lg font-semibold text-text-primary">客戶窗口</h1>
+              <div className="flex items-center justify-between gap-2">
+                <h1 className="text-lg font-semibold text-text-primary shrink-0">客戶窗口</h1>
                 <div className="flex items-center gap-1">
                   <Button
                     size="sm" variant="ghost"
                     onClick={handleContactCsvExport}
                     disabled={contacts.length === 0}
-                    className="h-7 px-2 text-xs gap-1"
+                    className="h-7 w-7 p-0"
                     title="匯出 CSV"
                   >
-                    <Download className="h-3.5 w-3.5" />匯出
+                    <Download className="h-3.5 w-3.5" />
                   </Button>
                   <Button
                     size="sm" variant="ghost"
                     onClick={() => contactCsvInputRef.current?.click()}
                     disabled={contactCsvImporting}
-                    className="h-7 px-2 text-xs gap-1"
+                    className="h-7 w-7 p-0"
                     title="從 CSV 匯入"
                   >
-                    <Upload className="h-3.5 w-3.5" />匯入
+                    <Upload className="h-3.5 w-3.5" />
                   </Button>
                   <Button size="sm" onClick={() => { setEditingContact(null); setContactFormOpen(true); }} className="h-7 px-2 text-xs">
                     <Plus className="h-3.5 w-3.5 mr-1" />新增
@@ -725,26 +725,26 @@ export function Documents() {
           {/* Sidebar */}
           <div className="w-72 shrink-0 border-r border-border flex flex-col bg-sidebar">
             <div className="p-4 border-b border-border space-y-3">
-              <div className="flex items-center justify-between">
-                <h1 className="text-lg font-semibold text-text-primary">通訊錄</h1>
+              <div className="flex items-center justify-between gap-2">
+                <h1 className="text-lg font-semibold text-text-primary shrink-0">通訊錄</h1>
                 <div className="flex items-center gap-1">
                   <Button
                     size="sm" variant="ghost"
                     onClick={handleCsvExport}
                     disabled={allEmployees.length === 0}
-                    className="h-7 px-2 text-xs gap-1"
+                    className="h-7 w-7 p-0"
                     title="匯出 CSV"
                   >
-                    <Download className="h-3.5 w-3.5" />匯出
+                    <Download className="h-3.5 w-3.5" />
                   </Button>
                   <Button
                     size="sm" variant="ghost"
                     onClick={() => csvInputRef.current?.click()}
                     disabled={csvImporting}
-                    className="h-7 px-2 text-xs gap-1"
+                    className="h-7 w-7 p-0"
                     title="從 CSV 匯入"
                   >
-                    <Upload className="h-3.5 w-3.5" />匯入
+                    <Upload className="h-3.5 w-3.5" />
                   </Button>
                   <Button size="sm" onClick={() => { setEditingEmployee(null); setEmployeeFormOpen(true); }} className="h-7 px-2 text-xs">
                     <Plus className="h-3.5 w-3.5 mr-1" />新增

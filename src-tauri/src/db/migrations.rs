@@ -7,6 +7,7 @@ const MIGRATION_004: &str = include_str!("../../../sql/004_email_attachments.sql
 const MIGRATION_005: &str = include_str!("../../../sql/005_project_goals.sql");
 const MIGRATION_006: &str = include_str!("../../../sql/006_task_goal_link.sql");
 const MIGRATION_007: &str = include_str!("../../../sql/007_goal_global.sql");
+const MIGRATION_008: &str = include_str!("../../../sql/008_gmail_tokens.sql");
 
 pub fn run(pool: &DbPool) -> DbResult<()> {
     let conn = pool.get()?;
@@ -82,6 +83,15 @@ pub fn run(pool: &DbPool) -> DbResult<()> {
     if applied_007 == 0 {
         conn.execute_batch(MIGRATION_007)?;
         conn.execute("INSERT OR IGNORE INTO _migrations (version) VALUES (7)", [])?;
+    }
+
+    let applied_008: i64 = conn
+        .query_row("SELECT COUNT(*) FROM _migrations WHERE version = 8", [], |r| r.get(0))
+        .unwrap_or(0);
+
+    if applied_008 == 0 {
+        conn.execute_batch(MIGRATION_008)?;
+        conn.execute("INSERT OR IGNORE INTO _migrations (version) VALUES (8)", [])?;
     }
 
     Ok(())

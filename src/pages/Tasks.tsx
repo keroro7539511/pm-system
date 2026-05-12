@@ -264,22 +264,17 @@ export function Tasks() {
   return (
     <div className="flex flex-col h-full overflow-hidden p-5 gap-3">
       {/* Header */}
-      <div className="flex items-center justify-between shrink-0">
-        <div>
-          <h1 className="text-lg font-semibold text-text-primary">{t("tasks.title")}</h1>
-          {selectedProject && (
-            <p className="text-xs text-text-muted mt-0.5 flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              {selectedProject.start_date && `${selectedProject.start_date}`}
-              {selectedProject.start_date && selectedProject.end_date && " → "}
-              {selectedProject.end_date && `${selectedProject.end_date}`}
-              {!selectedProject.start_date && !selectedProject.end_date && t("projects.noDates")}
-            </p>
-          )}
-        </div>
-        <Button size="sm" onClick={() => setFormOpen(true)}>
-          + {t("tasks.newTask")}
-        </Button>
+      <div className="shrink-0">
+        <h1 className="text-lg font-semibold text-text-primary">{t("tasks.title")}</h1>
+        {selectedProject && (
+          <p className="text-xs text-text-muted mt-0.5 flex items-center gap-1">
+            <Clock className="w-3 h-3" />
+            {selectedProject.start_date && `${selectedProject.start_date}`}
+            {selectedProject.start_date && selectedProject.end_date && " → "}
+            {selectedProject.end_date && `${selectedProject.end_date}`}
+            {!selectedProject.start_date && !selectedProject.end_date && t("projects.noDates")}
+          </p>
+        )}
       </div>
 
       {/* Project filter bar */}

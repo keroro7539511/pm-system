@@ -169,6 +169,13 @@ export const api = {
       invoke<string>("generate_email_draft", { subject, sender, body }),
   },
 
+  gmail: {
+    startAuth: () => invoke<{ connected: boolean; email: string | null }>("gmail_start_auth"),
+    getStatus: () => invoke<{ connected: boolean; email: string | null }>("gmail_get_status"),
+    sync: () => invoke<number>("gmail_sync"),
+    disconnect: () => invoke<void>("gmail_disconnect"),
+  },
+
   attachments: {
     getForEmail: (emailId: number) =>
       invoke<EmailAttachment[]>("get_email_attachments", { emailId }),

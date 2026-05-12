@@ -24,6 +24,10 @@ pub struct AppSettings {
     pub email_blacklist_domains: String, // 換行分隔，例："spam.com\nads.net"
     #[serde(default)]
     pub use_outlook: bool,
+    #[serde(default)]
+    pub gmail_client_id: String,
+    #[serde(default)]
+    pub gmail_client_secret: String,
 }
 
 fn default_ai_provider() -> String {
@@ -46,6 +50,8 @@ impl Default for AppSettings {
             my_email: String::new(),
             email_blacklist_domains: String::new(),
             use_outlook: false,
+            gmail_client_id: String::new(),
+            gmail_client_secret: String::new(),
         }
     }
 }

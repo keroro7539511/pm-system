@@ -10,6 +10,7 @@ pub async fn get_email_attachments(pool: State<'_, DbPool>, email_id: i64) -> Cm
 }
 
 #[tauri::command]
+#[allow(deprecated)]
 pub async fn open_attachment(app: tauri::AppHandle, path: String) -> CmdResult<()> {
     use tauri_plugin_shell::ShellExt;
     app.shell().open(&path, None).map_err(|e| e.to_string())
