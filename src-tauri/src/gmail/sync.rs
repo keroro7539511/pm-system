@@ -72,7 +72,7 @@ pub async fn sync_emails(app: &AppHandle, pool: &DbPool) -> Result<usize, String
 
         // Filter: blacklisted domains
         let domain = extract_domain_from_addr(&sender_addr);
-        if blacklist.iter().any(|d| *d == domain) {
+        if blacklist.contains(&domain) {
             continue;
         }
 

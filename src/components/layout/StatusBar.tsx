@@ -10,9 +10,7 @@ export function StatusBar() {
   const locale = i18n.language === "zh-TW" ? zhTW : enUS;
   const now = format(new Date(), "yyyy/MM/dd HH:mm", { locale });
 
-  const hasTaskWebhook = Boolean(settings.task_assign_webhook_url);
-  const hasN8nUrl      = Boolean(settings.n8n_webhook_url);
-  const configured     = hasN8nUrl || hasTaskWebhook;
+  const gmailConfigured = Boolean(settings.gmail_client_id && settings.gmail_client_secret);
 
   return (
     <footer className="flex items-center justify-between px-4 h-7 border-t border-border text-[11px] text-text-muted shrink-0">
@@ -21,11 +19,11 @@ export function StatusBar() {
           <span
             className={cn(
               "w-1.5 h-1.5 rounded-full",
-              configured ? "bg-success" : "bg-text-muted"
+              gmailConfigured ? "bg-success" : "bg-text-muted"
             )}
           />
-          n8n{" "}
-          {configured ? "已設定" : "未設定"}
+          Gmail{" "}
+          {gmailConfigured ? "已設定" : "未設定"}
         </span>
       </div>
       <span>{now}</span>

@@ -115,7 +115,6 @@ export const api = {
   settings: {
     get: () => invoke<AppSettings>("get_settings"),
     save: (settings: AppSettings) => invoke<void>("save_settings", { settings }),
-    testN8n: (url: string) => invoke<boolean>("test_n8n_connection", { url }),
   },
 
   outlook: {

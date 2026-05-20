@@ -17,8 +17,21 @@ pub async fn open_attachment(app: tauri::AppHandle, path: String) -> CmdResult<(
 }
 
 #[tauri::command]
-pub async fn read_attachment_base64(path: String) -> CmdResult<String> {
+pub async fn read_attachment_base64(app: tauri::AppHandle, path: String) -> CmdResult<String> {
     use base64::{engine::general_purpose::STANDARD, Engine};
-    let bytes = std::fs::read(&path).map_err(|e| e.to_string())?;
+    use tauri::Manager;
+
+    let allowed_dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|e| e.to_string())?
+        .join("attachments");
+
+    let canonical = std::fs::canonicalize(&path).map_err(|e| e.to_string())?;
+    if !canonical.starts_with(&allowed_dir) {
+        return Err("拒絕存取：路徑超出允許範圍".to_string());
+    }
+
+    let bytes = std::fs::read(&canonical).map_err(|e| e.to_string())?;
     Ok(STANDARD.encode(&bytes))
 }

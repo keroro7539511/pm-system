@@ -5,9 +5,6 @@ type CmdResult<T> = Result<T, String>;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AppSettings {
-    pub n8n_webhook_url: String,
-    pub n8n_local_port: u16,
-    pub n8n_hmac_secret: String,
     pub notifications_enabled: bool,
     pub theme: String,
     pub language: String,
@@ -17,11 +14,9 @@ pub struct AppSettings {
     #[serde(default = "default_ai_provider")]
     pub ai_provider: String,
     #[serde(default)]
-    pub task_assign_webhook_url: String,
-    #[serde(default)]
     pub my_email: String,
     #[serde(default)]
-    pub email_blacklist_domains: String, // 換行分隔，例："spam.com\nads.net"
+    pub email_blacklist_domains: String,
     #[serde(default)]
     pub use_outlook: bool,
     #[serde(default)]
@@ -37,16 +32,12 @@ fn default_ai_provider() -> String {
 impl Default for AppSettings {
     fn default() -> Self {
         Self {
-            n8n_webhook_url: String::new(),
-            n8n_local_port: 54321,
-            n8n_hmac_secret: String::new(),
             notifications_enabled: true,
             theme: "dark".to_string(),
             language: "zh-TW".to_string(),
             auto_backup: false,
             ai_api_key: String::new(),
             ai_provider: "gemini".to_string(),
-            task_assign_webhook_url: String::new(),
             my_email: String::new(),
             email_blacklist_domains: String::new(),
             use_outlook: false,
@@ -97,24 +88,3 @@ pub async fn save_settings(app: tauri::AppHandle, settings: AppSettings) -> CmdR
     std::fs::write(&path, data).map_err(|e| e.to_string())
 }
 
-#[tauri::command]
-pub async fn test_n8n_connection(url: String) -> CmdResult<bool> {
-    if url.is_empty() {
-        return Err("URL 不可為空".to_string());
-    }
-    let client = reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(5))
-        .build()
-        .map_err(|e| e.to_string())?;
-
-    // Use POST with a ping payload — n8n webhooks only respond to POST,
-    // and return 404 when inactive. A real 200 means the workflow is active.
-    let resp = client
-        .post(&url)
-        .json(&serde_json::json!({ "event": "ping" }))
-        .send()
-        .await
-        .map_err(|e| e.to_string())?;
-
-    Ok(resp.status().is_success())
-}

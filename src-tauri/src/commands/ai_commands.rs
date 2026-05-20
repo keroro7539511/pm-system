@@ -86,16 +86,15 @@ pub async fn generate_email_draft(
 }
 
 async fn call_gemini(client: &reqwest::Client, api_key: &str, prompt: &str) -> CmdResult<String> {
-    let url = format!(
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}"
-    );
+    let url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
     let body = serde_json::json!({
         "contents": [{ "parts": [{ "text": prompt }] }],
         "generationConfig": { "maxOutputTokens": 1024 }
     });
 
     let resp = client
-        .post(&url)
+        .post(url)
+        .header("x-goog-api-key", api_key)
         .header("content-type", "application/json")
         .json(&body)
         .send()

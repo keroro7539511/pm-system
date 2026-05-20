@@ -3,7 +3,6 @@ use tauri::{Emitter, Manager};
 pub mod commands;
 pub mod db;
 pub mod gmail;
-pub mod n8n;
 pub mod tray;
 
 pub fn run() {
@@ -18,15 +17,6 @@ pub fn run() {
             let pool = db::init(app.handle()).map_err(|e| e.to_string())?;
             app.manage(pool);
             tray::setup(app)?;
-
-            // Start n8n webhook server in background
-            let handle = app.handle().clone();
-            let settings = commands::settings_commands::load_settings_sync(app.handle());
-            let port = settings.n8n_local_port;
-            let secret = settings.n8n_hmac_secret.clone();
-            tauri::async_runtime::spawn(async move {
-                n8n::webhook_server::start(handle, port, secret).await;
-            });
 
             // Gmail background sync: poll every 5 minutes when connected
             let sync_handle = app.handle().clone();
@@ -86,7 +76,6 @@ pub fn run() {
             // Settings
             commands::settings_commands::get_settings,
             commands::settings_commands::save_settings,
-            commands::settings_commands::test_n8n_connection,
             // Contacts
             commands::contacts_commands::get_contacts,
             commands::contacts_commands::create_contact,

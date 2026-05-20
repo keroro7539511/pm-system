@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { CheckCircle2, XCircle, Download, AlertTriangle, RefreshCw, ArrowDownToLine, Mail, Loader2, Unlink } from "lucide-react";
+import { CheckCircle2, XCircle, Download, RefreshCw, ArrowDownToLine, Mail, Loader2, Unlink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,8 +16,6 @@ export function Settings() {
   const [form, setForm] = useState<AppSettings>(settings);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [n8nStatus, setN8nStatus] = useState<"idle" | "testing" | "ok" | "fail">("idle");
-  const [taskWebhookStatus, setTaskWebhookStatus] = useState<"idle" | "testing" | "ok" | "fail">("idle");
   const [exporting, setExporting] = useState(false);
   const [exportMsg, setExportMsg] = useState<string | null>(null);
   const [gmailStatus, setGmailStatus] = useState<{ connected: boolean; email: string | null } | null>(null);
@@ -31,9 +29,6 @@ export function Settings() {
   const [updateNotes, setUpdateNotes] = useState<string | null>(null);
   const [downloadPct, setDownloadPct] = useState(0);
   const [currentVersion, setCurrentVersion] = useState("0.1.0");
-
-  const taskWebhookUnsaved =
-    form.task_assign_webhook_url !== settings.task_assign_webhook_url;
 
   useEffect(() => {
     setForm(settings);
@@ -117,17 +112,6 @@ export function Settings() {
     }
   }
 
-  async function handleTestN8n() {
-    setN8nStatus("testing");
-    try {
-      const ok = await api.settings.testN8n(form.n8n_webhook_url);
-      setN8nStatus(ok ? "ok" : "fail");
-    } catch {
-      setN8nStatus("fail");
-    }
-    setTimeout(() => setN8nStatus("idle"), 3000);
-  }
-
   async function handleCheckUpdate() {
     setUpdateStatus("checking");
     setUpdateVersion(null);
@@ -175,119 +159,13 @@ export function Settings() {
     }
   }
 
-  async function handleTestTaskWebhook() {
-    setTaskWebhookStatus("testing");
-    try {
-      const ok = await api.settings.testN8n(form.task_assign_webhook_url);
-      setTaskWebhookStatus(ok ? "ok" : "fail");
-    } catch {
-      setTaskWebhookStatus("fail");
-    }
-    setTimeout(() => setTaskWebhookStatus("idle"), 3000);
-  }
-
   return (
     <div className="flex flex-col h-full overflow-auto p-5 gap-6 max-w-2xl">
       <h1 className="text-lg font-semibold text-text-primary">{t("settings.title")}</h1>
 
-      {/* n8n Integration */}
+      {/* Gmail Integration */}
       <section className="glass-card p-4 flex flex-col gap-4">
-        <h2 className="text-sm font-semibold text-text-primary">{t("settings.n8n.title")}</h2>
-
-        <div className="flex flex-col gap-1.5">
-          <Label>{t("settings.n8n.webhookUrl")}</Label>
-          <div className="flex gap-2">
-            <Input
-              value={form.n8n_webhook_url}
-              onChange={(e) => set("n8n_webhook_url", e.target.value)}
-              placeholder={t("settings.n8n.webhookUrlPlaceholder")}
-              className="flex-1"
-            />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleTestN8n}
-              disabled={!form.n8n_webhook_url || n8nStatus === "testing"}
-              className="shrink-0"
-            >
-              {n8nStatus === "testing" ? t("settings.n8n.testing") : t("settings.n8n.testConnection")}
-            </Button>
-          </div>
-          {n8nStatus === "ok" && (
-            <p className="flex items-center gap-1 text-xs text-success">
-              <CheckCircle2 className="w-3.5 h-3.5" /> {t("settings.n8n.testSuccess")}
-            </p>
-          )}
-          {n8nStatus === "fail" && (
-            <p className="flex items-center gap-1 text-xs text-danger">
-              <XCircle className="w-3.5 h-3.5" /> {t("settings.n8n.testFailed")}
-            </p>
-          )}
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div className="flex flex-col gap-1.5">
-            <Label>{t("settings.n8n.localPort")}</Label>
-            <Input
-              type="number"
-              value={form.n8n_local_port}
-              onChange={(e) => set("n8n_local_port", Number(e.target.value))}
-              min={1024}
-              max={65535}
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label>{t("settings.n8n.hmacSecret")}</Label>
-            <Input
-              type="password"
-              value={form.n8n_hmac_secret}
-              onChange={(e) => set("n8n_hmac_secret", e.target.value)}
-              placeholder="••••••••"
-            />
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <Label>任務指派通知 Webhook URL</Label>
-          <div className="flex gap-2">
-            <Input
-              value={form.task_assign_webhook_url}
-              onChange={(e) => set("task_assign_webhook_url", e.target.value)}
-              placeholder="http://localhost:5678/webhook/task-assigned"
-              className="flex-1"
-            />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleTestTaskWebhook}
-              disabled={!form.task_assign_webhook_url || taskWebhookStatus === "testing"}
-              className="shrink-0"
-            >
-              {taskWebhookStatus === "testing" ? "測試中..." : "測試"}
-            </Button>
-          </div>
-          {taskWebhookUnsaved && (
-            <p className="flex items-center gap-1 text-xs text-warning">
-              <AlertTriangle className="w-3.5 h-3.5" /> 尚未儲存—請按下方「儲存設定」才能生效
-            </p>
-          )}
-          {!taskWebhookUnsaved && taskWebhookStatus === "ok" && (
-            <p className="flex items-center gap-1 text-xs text-success">
-              <CheckCircle2 className="w-3.5 h-3.5" /> Webhook 已就緒（流程為 Active 狀態）
-            </p>
-          )}
-          {taskWebhookStatus === "fail" && (
-            <p className="flex items-center gap-1 text-xs text-danger">
-              <XCircle className="w-3.5 h-3.5" /> 連線失敗，請確認 n8n 流程已 Activate 且 URL 正確
-            </p>
-          )}
-          <p className="text-xs text-text-muted">指派任務時，自動 POST 到此 n8n Webhook 以發送 Email 通知</p>
-        </div>
-      </section>
-
-      {/* Gmail Direct Integration */}
-      <section className="glass-card p-4 flex flex-col gap-4">
-        <h2 className="text-sm font-semibold text-text-primary">Gmail 直接整合（不需 n8n）</h2>
+        <h2 className="text-sm font-semibold text-text-primary">Gmail 整合</h2>
 
         <div className="grid grid-cols-2 gap-3">
           <div className="flex flex-col gap-1.5">
