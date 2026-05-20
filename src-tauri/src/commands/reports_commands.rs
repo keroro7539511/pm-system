@@ -169,8 +169,11 @@ pub struct ExportData {
 pub async fn export_data(save_path: String, pool: State<'_, DbPool>) -> CmdResult<()> {
     let conn = pool.get().map_err(|e| e.to_string())?;
 
-    fn query_json(conn: &rusqlite::Connection, sql: &str) -> serde_json::Value {
-        let mut stmt = conn.prepare(sql).unwrap();
+    fn query_json(
+        conn: &rusqlite::Connection,
+        sql: &str,
+    ) -> Result<serde_json::Value, String> {
+        let mut stmt = conn.prepare(sql).map_err(|e| e.to_string())?;
         let cols: Vec<String> = stmt.column_names().iter().map(|s| s.to_string()).collect();
         let rows: Vec<serde_json::Value> = stmt
             .query_map([], |row| {
@@ -187,22 +190,21 @@ pub async fn export_data(save_path: String, pool: State<'_, DbPool>) -> CmdResul
                 }
                 Ok(serde_json::Value::Object(map))
             })
-            .into_iter()
-            .flatten()
+            .map_err(|e| e.to_string())?
             .filter_map(|r| r.ok())
             .collect();
-        serde_json::Value::Array(rows)
+        Ok(serde_json::Value::Array(rows))
     }
 
     use chrono::Local;
     let export = ExportData {
         exported_at: Local::now().to_rfc3339(),
         version: "1.0".to_string(),
-        tasks: query_json(&conn, "SELECT * FROM tasks"),
-        projects: query_json(&conn, "SELECT * FROM projects"),
-        clients: query_json(&conn, "SELECT * FROM clients"),
-        emails: query_json(&conn, "SELECT * FROM emails"),
-        documents: query_json(&conn, "SELECT * FROM documents"),
+        tasks:     query_json(&conn, "SELECT * FROM tasks")?,
+        projects:  query_json(&conn, "SELECT * FROM projects")?,
+        clients:   query_json(&conn, "SELECT * FROM clients")?,
+        emails:    query_json(&conn, "SELECT * FROM emails")?,
+        documents: query_json(&conn, "SELECT * FROM documents")?,
     };
 
     let json = serde_json::to_string_pretty(&export).map_err(|e| e.to_string())?;

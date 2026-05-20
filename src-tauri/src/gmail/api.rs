@@ -97,33 +97,6 @@ pub async fn get_profile_email(access_token: &str) -> Result<String, String> {
     Ok(profile.email_address)
 }
 
-pub async fn send_email(
-    access_token: &str,
-    to: &str,
-    subject: &str,
-    body: &str,
-) -> Result<(), String> {
-    let raw = format!(
-        "To: {to}\r\nSubject: {subject}\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n{body}"
-    );
-    let encoded = URL_SAFE_NO_PAD.encode(raw.as_bytes());
-    let payload = serde_json::json!({ "raw": encoded });
-
-    let resp = reqwest::Client::new()
-        .post(format!("{API_BASE}/users/me/messages/send"))
-        .bearer_auth(access_token)
-        .json(&payload)
-        .send()
-        .await
-        .map_err(|e| format!("send_email 失敗: {e}"))?;
-
-    if resp.status().is_success() {
-        Ok(())
-    } else {
-        Err(format!("send_email HTTP {}", resp.status().as_u16()))
-    }
-}
-
 fn parse_message(msg: Message) -> Result<ParsedMessage, String> {
     let payload = msg.payload.as_ref().ok_or("Message has no payload")?;
     let headers = payload.headers.as_deref().unwrap_or(&[]);

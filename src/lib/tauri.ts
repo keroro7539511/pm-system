@@ -128,35 +128,6 @@ export const api = {
       invoke<void>("send_outlook_email", { to, subject, body }),
   },
 
-  notifications: {
-    taskAssigned: (params: {
-      taskId: number;
-      taskTitle: string;
-      description?: string | null;
-      assignee?: string | null;
-      assigneeEmail?: string | null;
-      priority?: string | null;
-      status?: string | null;
-      projectName?: string | null;
-      startDate?: string | null;
-      dueDate?: string | null;
-    }) =>
-      invoke<boolean>("notify_task_assigned", {
-        payload: {
-          taskId:       params.taskId,
-          taskTitle:    params.taskTitle,
-          description:  params.description   ?? null,
-          assignee:     params.assignee      ?? null,
-          assigneeEmail: params.assigneeEmail ?? null,
-          priority:     params.priority      ?? null,
-          status:       params.status        ?? null,
-          projectName:  params.projectName   ?? null,
-          startDate:    params.startDate     ?? null,
-          dueDate:      params.dueDate       ?? null,
-        },
-      }),
-  },
-
   goals: {
     getAll: (projectId?: number) =>
       invoke<GoalWithStats[]>("get_all_goals", { projectId: projectId ?? null }),

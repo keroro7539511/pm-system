@@ -8,7 +8,6 @@ pub mod contacts_commands;
 pub mod documents_commands;
 pub mod emails_commands;
 pub mod employees_commands;
-pub mod notify_commands;
 pub mod outlook_commands;
 pub mod projects_commands;
 pub mod reports_commands;

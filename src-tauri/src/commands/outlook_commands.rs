@@ -1,7 +1,8 @@
 type CmdResult<T> = Result<T, String>;
 
-/// Send an email via the locally installed Outlook application.
-/// Uses PowerShell COM automation on Windows; returns an error on other platforms.
+/// Send an email via the locally installed mail application.
+/// Windows: PowerShell COM automation via Outlook.
+/// macOS:   AppleScript via Mail.app.
 #[tauri::command]
 pub async fn send_outlook_email(
     to: String,
@@ -43,7 +44,37 @@ $m.Send()";
     }
 }
 
-#[cfg(not(target_os = "windows"))]
+#[cfg(target_os = "macos")]
+fn send_impl(to: String, subject: String, body: String) -> CmdResult<()> {
+    // Arguments are passed as argv to avoid AppleScript injection.
+    const SCRIPT: &str = "\
+on run argv\n\
+    set theTo to item 1 of argv\n\
+    set theSubject to item 2 of argv\n\
+    set theBody to item 3 of argv\n\
+    tell application \"Microsoft Outlook\"\n\
+        set m to make new outgoing message\n\
+        set subject of m to theSubject\n\
+        set plain text content of m to theBody\n\
+        make new to recipient at m with properties {email address:{address:theTo}}\n\
+        send m\n\
+    end tell\n\
+end run";
+
+    let out = std::process::Command::new("osascript")
+        .args(["-e", SCRIPT, "--", &to, &subject, &body])
+        .output()
+        .map_err(|e| format!("無法執行 osascript：{e}"))?;
+
+    if out.status.success() {
+        Ok(())
+    } else {
+        let stderr = String::from_utf8_lossy(&out.stderr);
+        Err(format!("Outlook for Mac 寄信失敗：{stderr}"))
+    }
+}
+
+#[cfg(not(any(target_os = "windows", target_os = "macos")))]
 fn send_impl(_to: String, _subject: String, _body: String) -> CmdResult<()> {
-    Err("本機 Outlook 寄信僅支援 Windows".to_string())
+    Err("本機郵件寄信僅支援 Windows 與 macOS".to_string())
 }

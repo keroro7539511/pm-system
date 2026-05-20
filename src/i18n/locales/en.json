@@ -192,8 +192,8 @@
       "apiKey": "API Key"
     },
     "outlook": {
-      "title": "Use Local Outlook",
-      "description": "Send task assignment emails via PowerShell and local Outlook (Windows only)"
+      "title": "Use Local Mail App",
+      "description": "Send task assignment notifications via Outlook (Windows via PowerShell, macOS via AppleScript)"
     },
     "updates": {
       "install": "Install {{version}}",

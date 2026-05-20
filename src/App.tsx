@@ -38,9 +38,7 @@ function AppShell() {
   }, [loadSettings]);
 
   useEffect(() => {
-    if (tasks.length >= 0) {
-      setStartupOpen(true);
-    }
+    setStartupOpen(true);
   }, []);
 
   function handleCreateTask(data: CreateTaskPayload) {

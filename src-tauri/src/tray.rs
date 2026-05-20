@@ -10,8 +10,12 @@ pub fn setup(app: &tauri::App) -> tauri::Result<()> {
     let quit = MenuItem::with_id(app, "quit", "結束 / Quit", true, None::<&str>)?;
     let menu = Menu::with_items(app, &[&show, &separator, &quit])?;
 
+    let icon = app
+        .default_window_icon()
+        .ok_or_else(|| tauri::Error::Io(std::io::Error::other("no window icon configured")))?
+        .clone();
     let _tray = TrayIconBuilder::new()
-        .icon(app.default_window_icon().unwrap().clone())
+        .icon(icon)
         .menu(&menu)
         .tooltip("PM System")
         .on_menu_event(|app, event| match event.id.as_ref() {

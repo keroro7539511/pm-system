@@ -28,15 +28,20 @@ pub fn run() {
             tauri::async_runtime::spawn(async move {
                 loop {
                     if db::gmail_tokens::get(&sync_pool).ok().flatten().is_some() {
-                        match gmail::sync::sync_emails(&sync_handle, &sync_pool).await {
-                            Ok(n) if n > 0 => {
+                        let result = tokio::time::timeout(
+                            std::time::Duration::from_secs(60),
+                            gmail::sync::sync_emails(&sync_handle, &sync_pool),
+                        )
+                        .await;
+                        match result {
+                            Ok(Ok(n)) if n > 0 => {
                                 let _ = sync_handle.emit("email:received", ());
                             }
-                            Err(e) => eprintln!("[gmail] background sync error: {e}"),
+                            Ok(Err(e)) => eprintln!("[gmail] background sync error: {e}"),
+                            Err(_) => eprintln!("[gmail] background sync timed out after 60s"),
                             _ => {}
                         }
                     }
-                    // Sleep after sync completes to avoid burst if sync takes longer than interval
                     tokio::time::sleep(std::time::Duration::from_secs(300)).await;
                 }
             });
@@ -92,7 +97,6 @@ pub fn run() {
             commands::employees_commands::update_employee,
             commands::employees_commands::delete_employee,
             // Notifications
-            commands::notify_commands::notify_task_assigned,
             commands::outlook_commands::send_outlook_email,
             // Meetings
             commands::meetings_commands::get_meetings,

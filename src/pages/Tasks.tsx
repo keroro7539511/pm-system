@@ -156,65 +156,40 @@ export function Tasks() {
   }, []);
 
   const handleFormSubmit = useCallback((data: CreateTaskPayload, assigneeEmail?: string | null) => {
-    const sendNotify = (task: import("@/types").Task) => {
+    const sendNotify = (task: import("@/types").Task, isNew: boolean) => {
+      // On edit: only notify when the assignee actually changed to a new person
+      if (!isNew && (!data.assignee || data.assignee === editingTask?.assignee)) return;
+      if (!settings.use_outlook || !task.assignee || !assigneeEmail) return;
+
       const projectName = task.project_id
         ? (projects.find((p) => p.id === task.project_id)?.name ?? null)
         : null;
 
-      // Outlook email via PowerShell — ask for confirmation first
-      if (settings.use_outlook && task.assignee && assigneeEmail) {
-        const subject = `[任務分派] ${task.title}`;
-        const body = [
-          `您好，${task.assignee}，`,
-          ``,
-          `您已被指派以下任務：`,
-          ``,
-          `任務：${task.title}`,
-          task.description ? `說明：${task.description}` : null,
-          projectName ? `專案：${projectName}` : null,
-          `優先度：${task.priority}`,
-          task.due_date ? `截止日：${task.due_date}` : null,
-          ``,
-          `此信件由 PM System 自動發送。`,
-        ].filter(Boolean).join("\n");
-
-        setNotifyPending({ to: assigneeEmail, assignee: task.assignee, subject, body });
-      }
-
-      api.notifications.taskAssigned({
-        taskId:        task.id,
-        taskTitle:     task.title,
-        description:   task.description,
-        assignee:      task.assignee,
-        assigneeEmail: assigneeEmail ?? null,
-        priority:      task.priority,
-        status:        task.status,
-        projectName,
-        startDate:     task.start_date,
-        dueDate:       task.due_date,
-      })
-        .then((sent) => {
-          if (!sent) {
-            if (task.assignee && !settings.use_outlook) {
-              toast("任務已建立，但通知未發送 — 請至設定頁填入「任務指派通知 Webhook URL」並儲存", "info");
-            }
-            return;
-          }
-          if (task.assignee) {
-            toast(`已通知 ${task.assignee}（${assigneeEmail ?? "無 Email"}）`, "success");
-          }
-        })
-        .catch((e: unknown) => toast(`Webhook 發送失敗：${String(e)}`, "error"));
+      const subject = `[任務分派] ${task.title}`;
+      const body = [
+        `您好，${task.assignee}，`,
+        ``,
+        `您已被指派以下任務：`,
+        ``,
+        `任務：${task.title}`,
+        task.description ? `說明：${task.description}` : null,
+        projectName ? `專案：${projectName}` : null,
+        `優先度：${task.priority}`,
+        task.due_date ? `截止日：${task.due_date}` : null,
+        ``,
+        `此信件由 PM System 自動發送。`,
+      ].filter(Boolean).join("\n");
+      setNotifyPending({ to: assigneeEmail, assignee: task.assignee, subject, body });
     };
 
     if (editingTask) {
       updateTask.mutate(
         { id: editingTask.id, payload: { ...data } },
-        { onSuccess: (updated) => { handleFormClose(false); sendNotify(updated); } }
+        { onSuccess: (updated) => { handleFormClose(false); sendNotify(updated, false); } }
       );
     } else {
       createTask.mutate(data, {
-        onSuccess: (created) => { handleFormClose(false); sendNotify(created); },
+        onSuccess: (created) => { handleFormClose(false); sendNotify(created, true); },
       });
     }
   }, [editingTask, updateTask, createTask, handleFormClose, projects, settings]);
@@ -224,8 +199,8 @@ export function Tasks() {
     const { to, assignee, subject, body } = notifyPending;
     setNotifyPending(null);
     api.outlook.sendEmail(to, subject, body)
-      .then(() => toast(`Outlook 已寄信給 ${assignee}（${to}）`, "success"))
-      .catch((e: unknown) => toast(`Outlook 寄信失敗：${String(e)}`, "error"));
+      .then(() => toast(`已寄信給 ${assignee}（${to}）`, "success"))
+      .catch((e: unknown) => toast(`寄信失敗：${String(e)}`, "error"));
   }, [notifyPending]);
 
   const handleDeleteConfirm = useCallback(() => {
@@ -407,13 +382,13 @@ export function Tasks() {
         loading={createTask.isPending || updateTask.isPending}
       />
 
-      {/* Outlook notify confirmation */}
+      {/* Local mail app notify confirmation */}
       <Dialog open={!!notifyPending} onOpenChange={(open) => !open && setNotifyPending(null)}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>寄送通知信件</DialogTitle>
             <DialogDescription>
-              是否透過 Outlook 寄信通知負責人？
+              是否透過本機郵件應用程式寄信通知負責人？
             </DialogDescription>
           </DialogHeader>
           {notifyPending && (
