@@ -18,14 +18,12 @@ pub struct Meeting {
 pub struct CreateMeetingPayload {
     pub title: String,
     pub meeting_date: Option<String>,
-    pub attendees: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct UpdateMeetingPayload {
     pub title: Option<String>,
     pub meeting_date: Option<String>,
-    pub attendees: Option<String>,
     pub transcript: Option<String>,
     pub ai_summary: Option<String>,
 }
@@ -109,8 +107,8 @@ fn get_by_id(pool: &DbPool, id: i64) -> DbResult<Meeting> {
 pub fn create(pool: &DbPool, p: CreateMeetingPayload) -> DbResult<Meeting> {
     let conn = pool.get()?;
     conn.execute(
-        "INSERT INTO meetings (title, start_time, attendees) VALUES (?1, ?2, ?3)",
-        params![p.title, p.meeting_date, p.attendees],
+        "INSERT INTO meetings (title, start_time) VALUES (?1, ?2)",
+        params![p.title, p.meeting_date],
     )?;
     get_by_id(pool, conn.last_insert_rowid())
 }
@@ -121,11 +119,10 @@ pub fn update(pool: &DbPool, id: i64, p: UpdateMeetingPayload) -> DbResult<Meeti
         "UPDATE meetings SET
             title      = COALESCE(?1, title),
             start_time = ?2,
-            attendees  = ?3,
-            transcript = ?4,
-            ai_summary = ?5
-         WHERE id = ?6",
-        params![p.title, p.meeting_date, p.attendees, p.transcript, p.ai_summary, id],
+            transcript = ?3,
+            ai_summary = ?4
+         WHERE id = ?5",
+        params![p.title, p.meeting_date, p.transcript, p.ai_summary, id],
     )?;
     get_by_id(pool, id)
 }

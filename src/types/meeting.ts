@@ -11,13 +11,11 @@ export interface Meeting {
 export interface CreateMeetingPayload {
   title: string;
   meeting_date: string | null;
-  attendees: string | null;
 }
 
 export interface UpdateMeetingPayload {
   title?: string | null;
   meeting_date?: string | null;
-  attendees?: string | null;
   transcript?: string | null;
   ai_summary?: string | null;
 }

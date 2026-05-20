@@ -12,9 +12,8 @@ import { Label } from "@/components/ui/label";
 import type { Meeting, CreateMeetingPayload } from "@/types";
 
 const schema = z.object({
-  title:      z.string().min(1, "meetings.fields.titleRequired"),
+  title:        z.string().min(1, "meetings.fields.titleRequired"),
   meeting_date: z.string().optional(),
-  attendees:  z.string().optional(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -32,7 +31,7 @@ export function MeetingFormDialog({ open, onOpenChange, meeting, onSubmit, isPen
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { title: "", meeting_date: "", attendees: "" },
+    defaultValues: { title: "", meeting_date: "" },
   });
 
   useEffect(() => {
@@ -40,7 +39,6 @@ export function MeetingFormDialog({ open, onOpenChange, meeting, onSubmit, isPen
       reset({
         title:        meeting?.title        ?? "",
         meeting_date: meeting?.meeting_date ?? "",
-        attendees:    meeting?.attendees    ?? "",
       });
     }
   }, [open, meeting, reset]);
@@ -49,7 +47,6 @@ export function MeetingFormDialog({ open, onOpenChange, meeting, onSubmit, isPen
     onSubmit({
       title:        values.title,
       meeting_date: values.meeting_date || null,
-      attendees:    values.attendees    || null,
     });
   };
 
@@ -72,11 +69,6 @@ export function MeetingFormDialog({ open, onOpenChange, meeting, onSubmit, isPen
           <div className="space-y-1.5">
             <Label>{t("meetings.fields.date")}</Label>
             <Input type="date" {...register("meeting_date")} />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label>{t("meetings.fields.attendees")}</Label>
-            <Input placeholder="張小明, 李大華..." {...register("attendees")} />
           </div>
 
           <DialogFooter>

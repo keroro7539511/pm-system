@@ -287,10 +287,9 @@ export function MeetingsPane() {
             <div className="flex items-start justify-between px-6 py-4 border-b border-border bg-card-bg shrink-0">
               <div>
                 <h2 className="text-lg font-semibold text-text-primary">{selected.title}</h2>
-                <div className="flex items-center gap-3 mt-0.5 text-xs text-text-muted">
-                  {selected.meeting_date && <span>{selected.meeting_date}</span>}
-                  {selected.attendees && <span>{selected.attendees}</span>}
-                </div>
+                {selected.meeting_date && (
+                  <p className="text-xs text-text-muted mt-0.5">{selected.meeting_date}</p>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <Button
