@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { FileText, User, BookUser } from "lucide-react";
+import { FileText, User, BookUser, Video } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DocumentsPane } from "@/components/documents/DocumentsPane";
 import { ContactsPane }  from "@/components/documents/ContactsPane";
 import { EmployeesPane } from "@/components/documents/EmployeesPane";
+import { MeetingsPane }  from "@/components/documents/MeetingsPane";
 
-type Tab = "documents" | "contacts" | "employees";
+type Tab = "documents" | "contacts" | "employees" | "meetings";
 
 function TabBtn({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
@@ -34,10 +35,13 @@ export function Documents() {
             <FileText className="w-3.5 h-3.5" />{t("documents.title")}
           </TabBtn>
           <TabBtn active={tab === "contacts"} onClick={() => setTab("contacts")}>
-            <User className="w-3.5 h-3.5" />客戶窗口
+            <User className="w-3.5 h-3.5" />{t("contacts.title")}
           </TabBtn>
           <TabBtn active={tab === "employees"} onClick={() => setTab("employees")}>
-            <BookUser className="w-3.5 h-3.5" />通訊錄
+            <BookUser className="w-3.5 h-3.5" />{t("employees.title")}
+          </TabBtn>
+          <TabBtn active={tab === "meetings"} onClick={() => setTab("meetings")}>
+            <Video className="w-3.5 h-3.5" />{t("meetings.title")}
           </TabBtn>
         </div>
       </div>
@@ -45,6 +49,7 @@ export function Documents() {
       {tab === "documents" && <DocumentsPane />}
       {tab === "contacts"  && <ContactsPane />}
       {tab === "employees" && <EmployeesPane />}
+      {tab === "meetings"  && <MeetingsPane />}
     </div>
   );
 }

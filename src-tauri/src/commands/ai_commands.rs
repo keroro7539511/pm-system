@@ -1,4 +1,4 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::commands::settings_commands::load_settings_sync;
 
@@ -169,6 +169,82 @@ async fn call_claude(client: &reqwest::Client, api_key: &str, prompt: &str) -> C
         .next()
         .map(|c| c.text)
         .ok_or_else(|| "AI 回傳空內容".to_string())
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ActionItemSuggestion {
+    pub description: String,
+    pub assignee: Option<String>,
+    pub due_date: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct TranscriptSummary {
+    pub summary: String,
+    pub action_items: Vec<ActionItemSuggestion>,
+}
+
+#[tauri::command]
+pub async fn summarize_transcript(
+    app: tauri::AppHandle,
+    transcript: String,
+    today: String,
+) -> CmdResult<TranscriptSummary> {
+    let settings = load_settings_sync(&app);
+
+    if settings.ai_api_key.is_empty() {
+        return Err("請先在設定頁填入 API Key".to_string());
+    }
+
+    let prompt = format!(
+        "你是一位台灣 PM 的專業會議助理。請分析以下會議逐字稿，回傳**純 JSON**（不要有任何 markdown 標記）。\n\
+         格式：\n\
+         {{\"summary\":\"...\",\"action_items\":[{{\"description\":\"...\",\"assignee\":\"...\",\"due_date\":\"YYYY-MM-DD\"}}]}}\n\n\
+         規則：\n\
+         - summary：200 字以內，繁體中文，說明討論重點與決議\n\
+         - action_items：只列有人名與明確動作的待辦，assignee 填姓名（無則 null），\
+           due_date 填明確日期（今天 {today}，無截止日填 null）\n\n\
+         逐字稿：\n{transcript}"
+    );
+
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(60))
+        .build()
+        .map_err(|e| e.to_string())?;
+
+    let text = match settings.ai_provider.as_str() {
+        "openai" => call_openai(&client, &settings.ai_api_key, &prompt).await?,
+        "claude" => call_claude(&client, &settings.ai_api_key, &prompt).await?,
+        _ => call_gemini(&client, &settings.ai_api_key, &prompt).await?,
+    };
+
+    parse_summary_json(&text)
+}
+
+fn parse_summary_json(text: &str) -> CmdResult<TranscriptSummary> {
+    let start = text.find('{').ok_or("AI 回傳格式錯誤：找不到 JSON 物件")?;
+    let end = text.rfind('}').ok_or("AI 回傳格式錯誤：JSON 物件未閉合")?;
+    let json_str = &text[start..=end];
+
+    let v: serde_json::Value = serde_json::from_str(json_str)
+        .map_err(|e| format!("AI 回傳 JSON 解析失敗：{e}"))?;
+
+    let summary = v["summary"].as_str().unwrap_or("").to_string();
+    let action_items = v["action_items"]
+        .as_array()
+        .unwrap_or(&vec![])
+        .iter()
+        .map(|item| ActionItemSuggestion {
+            description: item["description"].as_str().unwrap_or("").to_string(),
+            assignee:    item["assignee"].as_str().map(|s| s.to_string()),
+            due_date:    item["due_date"].as_str()
+                .filter(|s| !s.is_empty() && *s != "null")
+                .map(|s| s.to_string()),
+        })
+        .filter(|a| !a.description.is_empty())
+        .collect();
+
+    Ok(TranscriptSummary { summary, action_items })
 }
 
 fn handle_error_status(status: u16, provider: &str) -> CmdResult<()> {

@@ -1,4 +1,5 @@
 pub mod ai_commands;
+pub mod meetings_commands;
 pub mod gmail_commands;
 pub mod attachments_commands;
 pub mod goals_commands;

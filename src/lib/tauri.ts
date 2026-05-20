@@ -29,6 +29,12 @@ import type {
   GoalWithStats,
   CreateGoalPayload,
   UpdateGoalPayload,
+  Meeting,
+  CreateMeetingPayload,
+  UpdateMeetingPayload,
+  ActionItem,
+  ActionItemInput,
+  TranscriptSummary,
 } from "@/types";
 
 export const api = {
@@ -163,9 +169,27 @@ export const api = {
     delete: (id: number) => invoke<void>("delete_project_goal", { id }),
   },
 
+  meetings: {
+    getAll: (search?: string) =>
+      invoke<Meeting[]>("get_meetings", { search: search ?? null }),
+    create: (payload: CreateMeetingPayload) =>
+      invoke<Meeting>("create_meeting", { payload }),
+    update: (id: number, payload: UpdateMeetingPayload) =>
+      invoke<Meeting>("update_meeting", { id, payload }),
+    delete: (id: number) => invoke<void>("delete_meeting", { id }),
+    getActionItems: (meetingId: number) =>
+      invoke<ActionItem[]>("get_action_items", { meetingId }),
+    saveActionItems: (meetingId: number, items: ActionItemInput[]) =>
+      invoke<ActionItem[]>("save_action_items", { meetingId, items }),
+    linkActionItemTask: (actionItemId: number, taskId: number) =>
+      invoke<void>("link_action_item_task", { actionItemId, taskId }),
+  },
+
   ai: {
     generateEmailDraft: (subject: string, sender: string, body: string) =>
       invoke<string>("generate_email_draft", { subject, sender, body }),
+    summarizeTranscript: (transcript: string, today: string) =>
+      invoke<TranscriptSummary>("summarize_transcript", { transcript, today }),
   },
 
   gmail: {

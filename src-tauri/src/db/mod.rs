@@ -4,6 +4,7 @@ use tauri::Manager;
 
 pub mod attachments;
 pub mod clients;
+pub mod meetings;
 pub mod contacts;
 pub mod documents;
 pub mod emails;

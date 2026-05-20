@@ -93,6 +93,38 @@
       "completed": "Completed"
     }
   },
+  "meetings": {
+    "title": "Meetings",
+    "new": "New Meeting",
+    "edit": "Edit Meeting",
+    "noMeetings": "No meetings yet",
+    "noMeetingsDesc": "Click \"Add\" to create the first one",
+    "selectPrompt": "Select a meeting to view transcript",
+    "orAdd": "or click \"Add\" to create the first one",
+    "searchPlaceholder": "Search meeting title...",
+    "deleted": "Meeting deleted",
+    "fields": {
+      "title": "Meeting Title",
+      "titleRequired": "Title is required",
+      "date": "Meeting Date",
+      "attendees": "Attendees (comma-separated)"
+    },
+    "transcript": "Transcript",
+    "summary": "Summary & Action Items",
+    "importVtt": "Import Teams .vtt",
+    "reimportVtt": "Re-import",
+    "noTranscript": "No transcript yet",
+    "noTranscriptDesc": "Import a .vtt file downloaded from Teams",
+    "aiSummarize": "AI Summary",
+    "aiSummarizing": "Analyzing...",
+    "noSummary": "No summary yet",
+    "noSummaryDesc": "Import a transcript first, then click \"AI Summary\"",
+    "actionItems": "Action Items",
+    "noActionItems": "No action items",
+    "convertToTask": "→ Task",
+    "taskCreated": "Task created",
+    "hasSummary": "Has summary"
+  },
   "contacts": {
     "title": "Contacts",
     "new": "New Contact",

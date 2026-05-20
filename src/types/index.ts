@@ -6,6 +6,7 @@ export * from "./employee";
 export * from "./email";
 export * from "./document";
 export * from "./goal";
+export * from "./meeting";
 
 export interface AppSettings {
   notifications_enabled: boolean;

@@ -90,8 +90,17 @@ pub fn run() {
             // Notifications
             commands::notify_commands::notify_task_assigned,
             commands::outlook_commands::send_outlook_email,
+            // Meetings
+            commands::meetings_commands::get_meetings,
+            commands::meetings_commands::create_meeting,
+            commands::meetings_commands::update_meeting,
+            commands::meetings_commands::delete_meeting,
+            commands::meetings_commands::get_action_items,
+            commands::meetings_commands::save_action_items,
+            commands::meetings_commands::link_action_item_task,
             // AI
             commands::ai_commands::generate_email_draft,
+            commands::ai_commands::summarize_transcript,
             // Attachments
             commands::attachments_commands::get_email_attachments,
             commands::attachments_commands::open_attachment,

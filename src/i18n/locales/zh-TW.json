@@ -116,6 +116,38 @@
       "notesPlaceholder": "其他備注..."
     }
   },
+  "meetings": {
+    "title": "會議記錄",
+    "new": "新增會議",
+    "edit": "編輯會議",
+    "noMeetings": "尚無會議記錄",
+    "noMeetingsDesc": "點擊「新增」建立第一筆",
+    "selectPrompt": "選擇會議以查看逐字稿",
+    "orAdd": "或點擊「新增」建立第一筆",
+    "searchPlaceholder": "搜尋會議標題...",
+    "deleted": "會議已刪除",
+    "fields": {
+      "title": "會議標題",
+      "titleRequired": "標題必填",
+      "date": "會議日期",
+      "attendees": "出席者（逗號分隔）"
+    },
+    "transcript": "逐字稿",
+    "summary": "摘要 & 行動項目",
+    "importVtt": "匯入 Teams .vtt",
+    "reimportVtt": "重新匯入",
+    "noTranscript": "尚無逐字稿",
+    "noTranscriptDesc": "請匯入 Teams 下載的 .vtt 逐字稿檔案",
+    "aiSummarize": "AI 摘要",
+    "aiSummarizing": "分析中...",
+    "noSummary": "尚未產生摘要",
+    "noSummaryDesc": "請先至「逐字稿」頁面匯入逐字稿後按「AI 摘要」",
+    "actionItems": "行動項目",
+    "noActionItems": "無行動項目",
+    "convertToTask": "→ 任務",
+    "taskCreated": "已建立任務",
+    "hasSummary": "有摘要"
+  },
   "employees": {
     "title": "通訊錄",
     "new": "新增員工",
