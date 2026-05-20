@@ -18,22 +18,22 @@ pub fn run() {
             app.manage(pool);
             tray::setup(app)?;
 
-            // Gmail background sync: poll every 5 minutes when connected
+            // Gmail background sync: runs immediately on startup, then every 5 minutes
             let sync_handle = app.handle().clone();
             let sync_pool = app.state::<db::DbPool>().inner().clone();
             tauri::async_runtime::spawn(async move {
-                let mut interval =
-                    tokio::time::interval(std::time::Duration::from_secs(300));
                 loop {
-                    interval.tick().await;
                     if db::gmail_tokens::get(&sync_pool).ok().flatten().is_some() {
                         match gmail::sync::sync_emails(&sync_handle, &sync_pool).await {
                             Ok(n) if n > 0 => {
                                 let _ = sync_handle.emit("email:received", ());
                             }
+                            Err(e) => eprintln!("[gmail] background sync error: {e}"),
                             _ => {}
                         }
                     }
+                    // Sleep after sync completes to avoid burst if sync takes longer than interval
+                    tokio::time::sleep(std::time::Duration::from_secs(300)).await;
                 }
             });
 

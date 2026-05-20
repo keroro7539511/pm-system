@@ -38,21 +38,23 @@ pub async fn sync_emails(app: &AppHandle, pool: &DbPool) -> Result<usize, String
         .filter(|s| !s.is_empty())
         .collect();
 
+    // Pre-fetch all existing gmail_ids — one query instead of N per-message lookups
+    let existing_ids: std::collections::HashSet<String> = {
+        let conn = pool.get().map_err(|e| e.to_string())?;
+        let mut stmt = conn
+            .prepare("SELECT gmail_id FROM emails WHERE gmail_id IS NOT NULL")
+            .map_err(|e| e.to_string())?;
+        let ids: Result<std::collections::HashSet<String>, String> = stmt
+            .query_map([], |r| r.get::<_, String>(0))
+            .map_err(|e| e.to_string())
+            .map(|rows| rows.flatten().collect());
+        ids?
+    };
+
     let mut inserted = 0;
 
     for msg_ref in &refs {
-        // Skip if already in DB
-        let exists = {
-            let conn = pool.get().map_err(|e| e.to_string())?;
-            conn.query_row(
-                "SELECT COUNT(*) FROM emails WHERE gmail_id = ?1",
-                rusqlite::params![msg_ref.id],
-                |r| r.get::<_, i64>(0),
-            )
-            .unwrap_or(0)
-                > 0
-        };
-        if exists {
+        if existing_ids.contains(&msg_ref.id) {
             continue;
         }
 

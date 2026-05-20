@@ -179,14 +179,21 @@ pub fn delete(pool: &DbPool, id: i64) -> DbResult<()> {
 
 pub fn stats(pool: &DbPool) -> DbResult<TaskStats> {
     let conn = pool.get()?;
-    let total: i64 = conn.query_row("SELECT COUNT(*) FROM tasks", [], |r| r.get(0))?;
-    let done: i64 = conn.query_row("SELECT COUNT(*) FROM tasks WHERE status = 'done'", [], |r| r.get(0))?;
-    let in_progress: i64 = conn.query_row("SELECT COUNT(*) FROM tasks WHERE status = 'in_progress'", [], |r| r.get(0))?;
-    let todo: i64 = conn.query_row("SELECT COUNT(*) FROM tasks WHERE status = 'todo'", [], |r| r.get(0))?;
-    let overdue: i64 = conn.query_row(
-        "SELECT COUNT(*) FROM tasks WHERE status NOT IN ('done') AND due_date < date('now')",
+    Ok(conn.query_row(
+        "SELECT
+           COUNT(*),
+           SUM(CASE WHEN status = 'done'        THEN 1 ELSE 0 END),
+           SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END),
+           SUM(CASE WHEN status = 'todo'        THEN 1 ELSE 0 END),
+           SUM(CASE WHEN status != 'done' AND due_date < date('now') THEN 1 ELSE 0 END)
+         FROM tasks",
         [],
-        |r| r.get(0),
-    )?;
-    Ok(TaskStats { total, done, in_progress, todo, overdue })
+        |r| Ok(TaskStats {
+            total:       r.get(0)?,
+            done:        r.get(1)?,
+            in_progress: r.get(2)?,
+            todo:        r.get(3)?,
+            overdue:     r.get(4)?,
+        }),
+    )?)
 }
