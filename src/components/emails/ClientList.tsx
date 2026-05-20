@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Plus, User, Pencil, Trash2, Download, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useUnreadCount } from "@/hooks/useEmails";
 import type { Client } from "@/types";
 
 interface ClientListProps {
@@ -24,6 +25,7 @@ const PRIORITY_DOT: Record<number, string> = {
 
 export function ClientList({ clients, selectedId, onSelect, onNew, onEdit, onDelete, onExport, onImportClick, csvImporting }: ClientListProps) {
   const { t } = useTranslation();
+  const { data: totalUnread = 0 } = useUnreadCount();
 
   return (
     <div className="flex flex-col h-full w-56 min-w-56 border-r border-border">
@@ -53,6 +55,11 @@ export function ClientList({ clients, selectedId, onSelect, onNew, onEdit, onDel
         >
           <span className="w-1.5 h-1.5 rounded-full bg-primary" />
           <span className="flex-1 text-left truncate text-xs">全部信件</span>
+          {totalUnread > 0 && (
+            <span className="shrink-0 text-[10px] bg-primary text-white rounded-full px-1.5 py-0.5 font-semibold leading-none">
+              {totalUnread}
+            </span>
+          )}
         </button>
 
         {clients.map((client) => (

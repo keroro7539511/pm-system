@@ -63,6 +63,14 @@ export function Emails() {
     );
   }, [emails, searchQuery]);
 
+  // Keep selectedEmail in sync with re-fetched emails so EmailDetail reflects the latest status
+  const liveSelectedEmail = useMemo(
+    () => selectedEmail != null
+      ? (emails.find(e => e.id === selectedEmail.id) ?? selectedEmail)
+      : null,
+    [emails, selectedEmail]
+  );
+
   function handleClientSelect(client: Client) {
     setSelectedClient(client.id === -1 ? null : client);
     setSelectedEmail(null);
@@ -297,7 +305,7 @@ export function Emails() {
       {/* Column 3: Email detail */}
       <div className="flex-1 overflow-hidden">
         <EmailDetail
-          email={selectedEmail}
+          email={liveSelectedEmail}
           onDelete={handleEmailDelete}
         />
       </div>
