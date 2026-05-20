@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import { useSettingsStore } from "@/stores/settingsStore";
@@ -118,43 +118,44 @@ export function Tasks() {
     });
   }, [tasks, selectedProjectId, searchQuery]);
 
-  function taskBasePayload(task: Task) {
-    return {
-      title:       task.title,
-      description: task.description   ?? undefined,
-      project_id:  task.project_id    ?? undefined,
-      assignee:    task.assignee      ?? undefined,
-      priority:    task.priority,
-      start_date:  task.start_date    ?? undefined,
-      due_date:    task.due_date      ?? undefined,
-      status:      task.status,
-      goal_id:     task.goal_id       ?? undefined,
-    } as const;
-  }
+  const handleStatusChange = useCallback((task: Task, status: import("@/types").TaskStatus) => {
+    updateTask.mutate({ id: task.id, payload: {
+      title: task.title, description: task.description ?? undefined,
+      project_id: task.project_id ?? undefined, assignee: task.assignee ?? undefined,
+      priority: task.priority, start_date: task.start_date ?? undefined,
+      due_date: task.due_date ?? undefined, status, goal_id: task.goal_id ?? undefined,
+    }});
+  }, [updateTask]);
 
-  function handleStatusChange(task: Task, status: import("@/types").TaskStatus) {
-    updateTask.mutate({ id: task.id, payload: { ...taskBasePayload(task), status } });
-  }
+  const handleGoalChange = useCallback((task: Task, goalId: number | null) => {
+    updateTask.mutate({ id: task.id, payload: {
+      title: task.title, description: task.description ?? undefined,
+      project_id: task.project_id ?? undefined, assignee: task.assignee ?? undefined,
+      priority: task.priority, start_date: task.start_date ?? undefined,
+      due_date: task.due_date ?? undefined, status: task.status, goal_id: goalId ?? undefined,
+    }});
+  }, [updateTask]);
 
-  function handleGoalChange(task: Task, goalId: number | null) {
-    updateTask.mutate({ id: task.id, payload: { ...taskBasePayload(task), goal_id: goalId } });
-  }
+  const handlePriorityChange = useCallback((task: Task, priority: import("@/types").Priority) => {
+    updateTask.mutate({ id: task.id, payload: {
+      title: task.title, description: task.description ?? undefined,
+      project_id: task.project_id ?? undefined, assignee: task.assignee ?? undefined,
+      priority, start_date: task.start_date ?? undefined,
+      due_date: task.due_date ?? undefined, status: task.status, goal_id: task.goal_id ?? undefined,
+    }});
+  }, [updateTask]);
 
-  function handlePriorityChange(task: Task, priority: import("@/types").Priority) {
-    updateTask.mutate({ id: task.id, payload: { ...taskBasePayload(task), priority } });
-  }
-
-  function handleEdit(task: Task) {
+  const handleEdit = useCallback((task: Task) => {
     setEditingTask(task);
     setFormOpen(true);
-  }
+  }, []);
 
-  function handleFormClose(open: boolean) {
+  const handleFormClose = useCallback((open: boolean) => {
     setFormOpen(open);
     if (!open) setEditingTask(undefined);
-  }
+  }, []);
 
-  function handleFormSubmit(data: CreateTaskPayload, assigneeEmail?: string | null) {
+  const handleFormSubmit = useCallback((data: CreateTaskPayload, assigneeEmail?: string | null) => {
     const sendNotify = (task: import("@/types").Task) => {
       const projectName = task.project_id
         ? (projects.find((p) => p.id === task.project_id)?.name ?? null)
@@ -216,40 +217,40 @@ export function Tasks() {
         onSuccess: (created) => { handleFormClose(false); sendNotify(created); },
       });
     }
-  }
+  }, [editingTask, updateTask, createTask, handleFormClose, projects, settings]);
 
-  function handleNotifyConfirm() {
+  const handleNotifyConfirm = useCallback(() => {
     if (!notifyPending) return;
     const { to, assignee, subject, body } = notifyPending;
     setNotifyPending(null);
     api.outlook.sendEmail(to, subject, body)
       .then(() => toast(`Outlook 已寄信給 ${assignee}（${to}）`, "success"))
       .catch((e: unknown) => toast(`Outlook 寄信失敗：${String(e)}`, "error"));
-  }
+  }, [notifyPending]);
 
-  function handleDeleteConfirm() {
+  const handleDeleteConfirm = useCallback(() => {
     if (!deletingTask) return;
     deleteTask.mutate(deletingTask.id, { onSuccess: () => setDeletingTask(undefined) });
-  }
+  }, [deletingTask, deleteTask]);
 
-  function handleCreateProject(data: CreateProjectPayload) {
+  const handleCreateProject = useCallback((data: CreateProjectPayload) => {
     createProject.mutate(data, {
       onSuccess: (project) => {
         setProjectFormOpen(false);
         setSelectedProjectId(project.id);
       },
     });
-  }
+  }, [createProject]);
 
-  function handleUpdateProject(data: UpdateProjectPayload) {
+  const handleUpdateProject = useCallback((data: UpdateProjectPayload) => {
     if (!editingProject) return;
     updateProject.mutate(
       { id: editingProject.id, payload: data },
       { onSuccess: () => { setEditingProject(undefined); setProjectFormOpen(false); } }
     );
-  }
+  }, [editingProject, updateProject]);
 
-  function handleDeleteProjectConfirm() {
+  const handleDeleteProjectConfirm = useCallback(() => {
     if (!deletingProject) return;
     deleteProject.mutate(deletingProject.id, {
       onSuccess: () => {
@@ -257,7 +258,7 @@ export function Tasks() {
         setDeletingProject(undefined);
       },
     });
-  }
+  }, [deletingProject, deleteProject, selectedProjectId]);
 
   const selectedProject = projects.find((p) => p.id === selectedProjectId);
 

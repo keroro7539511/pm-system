@@ -1,10 +1,11 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import { Loader2, ShieldOff } from "lucide-react";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { toast } from "@/stores/toastStore";
-import Papa from "papaparse";
+import { downloadCsv } from "@/lib/csv";
+import { useCsvImport } from "@/hooks/useCsvImport";
 import { ClientList } from "@/components/emails/ClientList";
 import { EmailList } from "@/components/emails/EmailList";
 import { EmailDetail } from "@/components/emails/EmailDetail";
@@ -49,9 +50,26 @@ export function Emails() {
   const deleteClient = useDeleteClient();
   const deleteEmail = useDeleteEmail();
 
-  const [csvImporting, setCsvImporting] = useState(false);
-  const [csvResult, setCsvResult] = useState<{ ok: number; fail: number } | null>(null);
-  const csvInputRef = useRef<HTMLInputElement>(null);
+  const importRow = useCallback(async (row: Record<string, string>) => {
+    const name = (row["name"] ?? row["名稱"] ?? row["客戶名稱"] ?? "").trim();
+    if (!name) throw new Error("missing name");
+    const priorityRaw = (row["priority"] ?? row["優先度"] ?? "").trim();
+    const priorityNum = Number(priorityRaw);
+    const priority = (priorityNum === 1 || priorityNum === 2 || priorityNum === 3) ? priorityNum : 2;
+    await createClient.mutateAsync({
+      name,
+      contact_person: (row["contact_person"] ?? row["聯絡人"] ?? "").trim() || undefined,
+      email:          (row["email"]          ?? row["信箱"]   ?? "").trim() || undefined,
+      phone:          (row["phone"]          ?? row["電話"]   ?? "").trim() || undefined,
+      industry:       (row["industry"]       ?? row["產業"]   ?? "").trim() || undefined,
+      priority: priority as 1 | 2 | 3,
+      notes:          (row["notes"]          ?? row["備註"]   ?? "").trim() || undefined,
+      domain:         (row["domain"]         ?? row["網域"]   ?? "").trim() || undefined,
+    });
+  }, [createClient]);
+
+  const { importing: csvImporting, result: csvResult, inputRef: csvInputRef, handleFile: handleCsvFile } =
+    useCsvImport(importRow);
 
   const filteredEmails = useMemo(() => {
     if (!searchQuery) return emails;
@@ -166,68 +184,19 @@ export function Emails() {
   }
 
   function handleCsvExport() {
-    const rows = clients.map((c) => ({
-      name:           c.name,
-      contact_person: c.contact_person ?? "",
-      email:          c.email          ?? "",
-      phone:          c.phone          ?? "",
-      industry:       c.industry       ?? "",
-      priority:       c.priority,
-      notes:          c.notes          ?? "",
-      domain:         c.domain         ?? "",
-    }));
-    const csv = Papa.unparse(rows, { header: true });
-    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `clients_${new Date().toISOString().slice(0, 10)}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }
-
-  function handleCsvFile(file: File) {
-    setCsvImporting(true);
-    setCsvResult(null);
-    Papa.parse<Record<string, string>>(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: async (results) => {
-        let ok = 0;
-        let fail = 0;
-        for (const row of results.data) {
-          const name = (row["name"] ?? row["名稱"] ?? row["客戶名稱"] ?? "").trim();
-          if (!name) { fail++; continue; }
-          const priorityRaw = (row["priority"] ?? row["優先度"] ?? "").trim();
-          const priorityNum = Number(priorityRaw);
-          const priority = (priorityNum === 1 || priorityNum === 2 || priorityNum === 3) ? priorityNum : 2;
-          try {
-            await createClient.mutateAsync({
-              name,
-              contact_person: (row["contact_person"] ?? row["聯絡人"] ?? "").trim() || undefined,
-              email:          (row["email"]          ?? row["信箱"]   ?? "").trim() || undefined,
-              phone:          (row["phone"]          ?? row["電話"]   ?? "").trim() || undefined,
-              industry:       (row["industry"]       ?? row["產業"]   ?? "").trim() || undefined,
-              priority: priority as 1 | 2 | 3,
-              notes:          (row["notes"]          ?? row["備註"]   ?? "").trim() || undefined,
-              domain:         (row["domain"]         ?? row["網域"]   ?? "").trim() || undefined,
-            });
-            ok++;
-          } catch {
-            fail++;
-          }
-        }
-        setCsvImporting(false);
-        setCsvResult({ ok, fail });
-        if (csvInputRef.current) csvInputRef.current.value = "";
-      },
-      error: () => {
-        setCsvImporting(false);
-        setCsvResult({ ok: 0, fail: -1 });
-      },
-    });
+    downloadCsv(
+      clients.map((c) => ({
+        name:           c.name,
+        contact_person: c.contact_person ?? "",
+        email:          c.email          ?? "",
+        phone:          c.phone          ?? "",
+        industry:       c.industry       ?? "",
+        priority:       c.priority,
+        notes:          c.notes          ?? "",
+        domain:         c.domain         ?? "",
+      })),
+      `clients_${new Date().toISOString().slice(0, 10)}.csv`
+    );
   }
 
   if (clientsLoading) {

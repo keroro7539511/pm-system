@@ -1,7 +1,7 @@
-import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Check, ChevronDown, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useDropdownPortal } from "@/hooks/useDropdownPortal";
 import type { GoalWithStats } from "@/types";
 
 interface GoalSelectProps {
@@ -11,61 +11,13 @@ interface GoalSelectProps {
   onChange: (goalId: number | null) => void;
 }
 
-interface DropdownPos {
-  top: number;
-  left: number;
-  minWidth: number;
-  dropUp: boolean;
-}
-
-const DROPDOWN_HEIGHT = 220;
-
 export function GoalSelect({ goalId, projectId, goals, onChange }: GoalSelectProps) {
-  const [open, setOpen] = useState(false);
-  const [pos, setPos] = useState<DropdownPos | null>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const { open, pos, triggerRef, dropdownRef, close, handleToggle } =
+    useDropdownPortal(220, 160);
 
   const projectGoals = projectId ? goals.filter((g) => g.project_id === projectId) : [];
   const globalGoals  = goals.filter((g) => g.project_id === null);
   const current = goals.find((g) => g.id === goalId);
-
-  const close = useCallback(() => setOpen(false), []);
-
-  useEffect(() => {
-    if (!open) return;
-    function onPointerDown(e: PointerEvent) {
-      const target = e.target as Node;
-      if (triggerRef.current?.contains(target)) return;
-      if (dropdownRef.current?.contains(target)) return;
-      close();
-    }
-    document.addEventListener("pointerdown", onPointerDown);
-    document.addEventListener("scroll", close, true);
-    return () => {
-      document.removeEventListener("pointerdown", onPointerDown);
-      document.removeEventListener("scroll", close, true);
-    };
-  }, [open, close]);
-
-  function handleToggle() {
-    if (open) { close(); return; }
-    if (!triggerRef.current) return;
-    const rect = triggerRef.current.getBoundingClientRect();
-    const dropUp = rect.bottom + DROPDOWN_HEIGHT > window.innerHeight - 8;
-    setPos({
-      top: dropUp ? rect.top - 4 : rect.bottom + 4,
-      left: rect.left,
-      minWidth: Math.max(rect.width, 160),
-      dropUp,
-    });
-    setOpen(true);
-  }
-
-  function handleSelect(id: number | null) {
-    onChange(id);
-    close();
-  }
 
   return (
     <>
@@ -105,7 +57,7 @@ export function GoalSelect({ goalId, projectId, goals, onChange }: GoalSelectPro
         >
           <button
             type="button"
-            onClick={() => handleSelect(null)}
+            onClick={() => { onChange(null); close(); }}
             className="w-full flex items-center gap-2 px-2.5 py-1.5 text-[11px] text-text-muted hover:bg-white/10 transition-colors text-left"
           >
             <span className="flex-1">— 無目標 —</span>
@@ -114,7 +66,6 @@ export function GoalSelect({ goalId, projectId, goals, onChange }: GoalSelectPro
 
           <div className="h-px bg-border/50 my-1" />
 
-          {/* 專案目標 */}
           {!projectId && (
             <p className="px-2.5 py-1.5 text-[10px] text-text-muted">請先指定任務專案</p>
           )}
@@ -128,7 +79,7 @@ export function GoalSelect({ goalId, projectId, goals, onChange }: GoalSelectPro
             <button
               key={g.id}
               type="button"
-              onClick={() => handleSelect(g.id)}
+              onClick={() => { onChange(g.id); close(); }}
               className="w-full flex items-center gap-2 px-2.5 py-1.5 text-[11px] hover:bg-white/10 transition-colors text-left"
             >
               <Target className="w-3 h-3 text-primary/70 shrink-0" />
@@ -137,7 +88,6 @@ export function GoalSelect({ goalId, projectId, goals, onChange }: GoalSelectPro
             </button>
           ))}
 
-          {/* 全部專案適用目標 */}
           {globalGoals.length > 0 && (
             <>
               {projectGoals.length > 0 && <div className="h-px bg-border/50 my-1" />}
@@ -146,7 +96,7 @@ export function GoalSelect({ goalId, projectId, goals, onChange }: GoalSelectPro
                 <button
                   key={g.id}
                   type="button"
-                  onClick={() => handleSelect(g.id)}
+                  onClick={() => { onChange(g.id); close(); }}
                   className="w-full flex items-center gap-2 px-2.5 py-1.5 text-[11px] hover:bg-white/10 transition-colors text-left"
                 >
                   <Target className="w-3 h-3 text-purple/70 shrink-0" />
