@@ -318,6 +318,13 @@ export function Settings() {
           />
         </div>
         <div className="flex items-center justify-between">
+          <Label className="text-text-secondary text-sm">{t("settings.notifications.launchAtLogin")}</Label>
+          <Switch
+            checked={form.launch_at_login}
+            onCheckedChange={(v) => set("launch_at_login", v)}
+          />
+        </div>
+        <div className="flex items-center justify-between">
           <div>
             <Label className="text-text-secondary text-sm">{t("settings.outlook.title")}</Label>
             <p className="text-xs text-text-muted mt-0.5">{t("settings.outlook.description")}</p>

@@ -23,6 +23,8 @@ pub struct AppSettings {
     pub gmail_client_id: String,
     #[serde(default)]
     pub gmail_client_secret: String,
+    #[serde(default)]
+    pub launch_at_login: bool,
 }
 
 fn default_ai_provider() -> String {
@@ -43,6 +45,7 @@ impl Default for AppSettings {
             use_outlook: false,
             gmail_client_id: String::new(),
             gmail_client_secret: String::new(),
+            launch_at_login: false,
         }
     }
 }
@@ -85,6 +88,15 @@ pub async fn save_settings(app: tauri::AppHandle, settings: AppSettings) -> CmdR
         std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
     }
     let data = serde_json::to_string_pretty(&settings).map_err(|e| e.to_string())?;
-    std::fs::write(&path, data).map_err(|e| e.to_string())
+    std::fs::write(&path, data).map_err(|e| e.to_string())?;
+
+    use tauri_plugin_autostart::ManagerExt;
+    if settings.launch_at_login {
+        app.autolaunch().enable().map_err(|e| e.to_string())?;
+    } else {
+        app.autolaunch().disable().map_err(|e| e.to_string())?;
+    }
+
+    Ok(())
 }
 

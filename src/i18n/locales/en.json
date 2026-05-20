@@ -206,7 +206,8 @@
     },
     "notifications": {
       "title": "Notifications",
-      "enabled": "Enable System Notifications"
+      "enabled": "Enable System Notifications",
+      "launchAtLogin": "Launch at login"
     },
     "appearance": {
       "title": "Appearance",

@@ -206,7 +206,8 @@
     },
     "notifications": {
       "title": "通知設定",
-      "enabled": "啟用系統通知"
+      "enabled": "啟用系統通知",
+      "launchAtLogin": "開機自動啟動"
     },
     "appearance": {
       "title": "外觀",

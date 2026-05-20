@@ -20,6 +20,7 @@ export interface AppSettings {
   use_outlook: boolean;
   gmail_client_id: string;
   gmail_client_secret: string;
+  launch_at_login: boolean;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -34,4 +35,5 @@ export const DEFAULT_SETTINGS: AppSettings = {
   use_outlook: false,
   gmail_client_id: "",
   gmail_client_secret: "",
+  launch_at_login: false,
 };
