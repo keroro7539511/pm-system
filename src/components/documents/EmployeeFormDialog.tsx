@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useTranslation } from "react-i18next";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
@@ -11,8 +12,8 @@ import { Label } from "@/components/ui/label";
 import type { Employee, CreateEmployeePayload } from "@/types";
 
 const schema = z.object({
-  name:       z.string().min(1, "姓名必填"),
-  email:      z.string().optional(),
+  name:       z.string().min(1, "employees.fields.nameRequired"),
+  email:      z.string().email("contacts.fields.emailInvalid").or(z.literal("")).optional(),
   extension:  z.string().optional(),
   department: z.string().optional(),
 });
@@ -28,6 +29,8 @@ interface Props {
 }
 
 export function EmployeeFormDialog({ open, onOpenChange, employee, onSubmit, isPending }: Props) {
+  const { t } = useTranslation();
+
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { name: "", email: "", extension: "", department: "" },
@@ -57,36 +60,38 @@ export function EmployeeFormDialog({ open, onOpenChange, employee, onSubmit, isP
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>{employee ? "編輯員工" : "新增員工"}</DialogTitle>
+          <DialogTitle>{employee ? t("employees.edit") : t("employees.new")}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onValid)} className="space-y-4">
           <div className="space-y-1.5">
-            <Label>姓名 *</Label>
+            <Label>{t("employees.fields.name")} *</Label>
             <Input {...register("name")} className={errors.name ? "border-danger" : ""} />
-            {errors.name && <p className="text-xs text-danger">{errors.name.message}</p>}
+            {errors.name && <p className="text-xs text-danger">{t(errors.name.message ?? "employees.fields.nameRequired")}</p>}
           </div>
 
           <div className="space-y-1.5">
-            <Label>Email</Label>
-            <Input type="email" placeholder="name@company.com" {...register("email")} />
+            <Label>{t("employees.fields.email")}</Label>
+            <Input type="email" placeholder="name@company.com" {...register("email")}
+              className={errors.email ? "border-danger" : ""} />
+            {errors.email && <p className="text-xs text-danger">{t(errors.email.message ?? "contacts.fields.emailInvalid")}</p>}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>分機</Label>
+              <Label>{t("employees.fields.extension")}</Label>
               <Input placeholder="1234" {...register("extension")} />
             </div>
             <div className="space-y-1.5">
-              <Label>部門</Label>
+              <Label>{t("employees.fields.department")}</Label>
               <Input placeholder="工程部" {...register("department")} />
             </div>
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>取消</Button>
+            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>{t("common.cancel")}</Button>
             <Button type="submit" disabled={isPending}>
-              {isPending ? "儲存中..." : "儲存"}
+              {isPending ? t("common.saving") : t("common.save")}
             </Button>
           </DialogFooter>
         </form>

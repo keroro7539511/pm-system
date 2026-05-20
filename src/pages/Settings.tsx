@@ -165,7 +165,7 @@ export function Settings() {
 
       {/* Gmail Integration */}
       <section className="glass-card p-4 flex flex-col gap-4">
-        <h2 className="text-sm font-semibold text-text-primary">Gmail 整合</h2>
+        <h2 className="text-sm font-semibold text-text-primary">{t("settings.gmail.title")}</h2>
 
         <div className="grid grid-cols-2 gap-3">
           <div className="flex flex-col gap-1.5">
@@ -187,7 +187,7 @@ export function Settings() {
           </div>
         </div>
         <p className="text-xs text-text-muted -mt-2">
-          前往 <span className="text-primary">console.cloud.google.com</span> → API 和服務 → 憑證 → 建立 OAuth 2.0 用戶端 ID（類型選「桌面應用程式」）
+          {t("settings.gmail.setupGuide")}
         </p>
 
         <div className="flex items-center gap-2 flex-wrap">
@@ -195,7 +195,7 @@ export function Settings() {
             <>
               <div className="flex items-center gap-1.5 text-xs text-success">
                 <CheckCircle2 className="w-3.5 h-3.5" />
-                已連接：{gmailStatus.email}
+                {t("settings.gmail.connected", { email: gmailStatus.email })}
               </div>
               <Button
                 size="sm"
@@ -205,8 +205,8 @@ export function Settings() {
                 disabled={gmailSyncing}
               >
                 {gmailSyncing
-                  ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />同步中...</>
-                  : <><Mail className="w-3.5 h-3.5" />立即同步</>}
+                  ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />{t("settings.gmail.syncing")}</>
+                  : <><Mail className="w-3.5 h-3.5" />{t("settings.gmail.sync")}</>}
               </Button>
               <Button
                 size="sm"
@@ -214,7 +214,7 @@ export function Settings() {
                 className="h-7 px-3 text-xs gap-1.5 text-danger hover:text-danger"
                 onClick={handleGmailDisconnect}
               >
-                <Unlink className="w-3.5 h-3.5" />中斷連接
+                <Unlink className="w-3.5 h-3.5" />{t("settings.gmail.disconnect")}
               </Button>
             </>
           ) : (
@@ -225,8 +225,8 @@ export function Settings() {
               disabled={gmailLoading || !form.gmail_client_id || !form.gmail_client_secret}
             >
               {gmailLoading
-                ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />授權中...</>
-                : <><Mail className="w-3.5 h-3.5" />連接 Gmail</>}
+                ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />{t("settings.gmail.connecting")}</>
+                : <><Mail className="w-3.5 h-3.5" />{t("settings.gmail.connect")}</>}
             </Button>
           )}
         </div>
@@ -240,25 +240,25 @@ export function Settings() {
           </p>
         )}
 
-        <p className="text-xs text-text-muted">連接後每 5 分鐘自動同步收件匣，也可手動觸發</p>
+        <p className="text-xs text-text-muted">{t("settings.gmail.autoSyncNote")}</p>
       </section>
 
       {/* Email filtering */}
       <section className="glass-card p-4 flex flex-col gap-4">
-        <h2 className="text-sm font-semibold text-text-primary">信件過濾</h2>
+        <h2 className="text-sm font-semibold text-text-primary">{t("settings.emailFilter.title")}</h2>
 
         <div className="flex flex-col gap-1.5">
-          <Label>我的 Email（寄出去的信不顯示）</Label>
+          <Label>{t("settings.emailFilter.myEmail")}</Label>
           <Input
             value={form.my_email}
             onChange={(e) => set("my_email", e.target.value)}
             placeholder="your@email.com"
           />
-          <p className="text-xs text-text-muted">填入後，n8n 推送進來的信件中若寄件者為此 Email 會自動忽略</p>
+          <p className="text-xs text-text-muted">{t("settings.emailFilter.myEmailHelp")}</p>
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <Label>封鎖 Domain（每行一個）</Label>
+          <Label>{t("settings.emailFilter.blockedDomains")}</Label>
           <textarea
             value={form.email_blacklist_domains}
             onChange={(e) => set("email_blacklist_domains", e.target.value)}
@@ -266,15 +266,15 @@ export function Settings() {
             rows={4}
             className="w-full rounded-md border border-border bg-transparent px-3 py-2 text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-primary resize-none"
           />
-          <p className="text-xs text-text-muted">來自這些 domain 的信件會被丟棄，不進資料庫</p>
+          <p className="text-xs text-text-muted">{t("settings.emailFilter.blockedDomainsHelp")}</p>
         </div>
       </section>
 
       {/* AI */}
       <section className="glass-card p-4 flex flex-col gap-4">
-        <h2 className="text-sm font-semibold text-text-primary">AI 功能</h2>
+        <h2 className="text-sm font-semibold text-text-primary">{t("settings.ai.title")}</h2>
         <div className="flex flex-col gap-1.5">
-          <Label>AI 服務商</Label>
+          <Label>{t("settings.ai.provider")}</Label>
           <Select
             value={form.ai_provider}
             onValueChange={(v) => set("ai_provider", v as AppSettings["ai_provider"])}
@@ -288,7 +288,7 @@ export function Settings() {
           </Select>
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label>API Key</Label>
+          <Label>{t("settings.ai.apiKey")}</Label>
           <Input
             type="password"
             value={form.ai_api_key}
@@ -319,8 +319,8 @@ export function Settings() {
         </div>
         <div className="flex items-center justify-between">
           <div>
-            <Label className="text-text-secondary text-sm">使用本機 Outlook 寄信</Label>
-            <p className="text-xs text-text-muted mt-0.5">分派任務時透過 PowerShell 呼叫本機 Outlook 自動寄出通知（僅限 Windows）</p>
+            <Label className="text-text-secondary text-sm">{t("settings.outlook.title")}</Label>
+            <p className="text-xs text-text-muted mt-0.5">{t("settings.outlook.description")}</p>
           </div>
           <Switch
             checked={form.use_outlook}
@@ -396,7 +396,7 @@ export function Settings() {
                 onClick={handleInstallUpdate}
               >
                 <ArrowDownToLine className="w-3.5 h-3.5" />
-                安裝 {updateVersion}
+                {t("settings.updates.install", { version: updateVersion })}
               </Button>
             )}
             <Button
@@ -407,7 +407,7 @@ export function Settings() {
               disabled={updateStatus === "checking" || updateStatus === "downloading"}
             >
               <RefreshCw className={`w-3.5 h-3.5 ${updateStatus === "checking" ? "animate-spin" : ""}`} />
-              {updateStatus === "checking" ? "檢查中..." : "檢查更新"}
+              {updateStatus === "checking" ? t("settings.updates.checking") : t("settings.updates.check")}
             </Button>
           </div>
         </div>
@@ -415,12 +415,12 @@ export function Settings() {
         {/* Update status feedback */}
         {updateStatus === "up-to-date" && (
           <p className="flex items-center gap-1.5 text-xs text-success">
-            <CheckCircle2 className="w-3.5 h-3.5" /> 已是最新版本
+            <CheckCircle2 className="w-3.5 h-3.5" /> {t("settings.updates.upToDate")}
           </p>
         )}
         {updateStatus === "available" && updateVersion && (
           <div className="rounded-md border border-primary/30 bg-primary/5 px-3 py-2 flex flex-col gap-1">
-            <p className="text-xs font-medium text-primary">發現新版本 {updateVersion}</p>
+            <p className="text-xs font-medium text-primary">{t("settings.updates.available", { version: updateVersion })}</p>
             {updateNotes && (
               <p className="text-[11px] text-text-muted whitespace-pre-wrap">{updateNotes}</p>
             )}
@@ -429,7 +429,7 @@ export function Settings() {
         {updateStatus === "downloading" && (
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center justify-between text-xs text-text-muted">
-              <span>下載中...</span>
+              <span>{t("settings.updates.downloading")}</span>
               <span>{downloadPct}%</span>
             </div>
             <div className="h-1.5 rounded-full bg-layer-3 overflow-hidden">
@@ -443,7 +443,7 @@ export function Settings() {
         {updateStatus === "error" && (
           <div className="flex flex-col gap-1">
             <p className="flex items-center gap-1.5 text-xs text-danger">
-              <XCircle className="w-3.5 h-3.5" /> 檢查失敗，請確認網路連線
+              <XCircle className="w-3.5 h-3.5" /> {t("settings.updates.checkFailed")}
             </p>
             {updateNotes && (
               <p className="text-[11px] text-text-muted font-mono break-all">{updateNotes}</p>

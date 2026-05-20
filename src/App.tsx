@@ -16,6 +16,7 @@ import { useSettingsStore } from "@/stores/settingsStore";
 import { TaskFormDialog } from "@/components/tasks/TaskFormDialog";
 import { StartupTasksModal } from "@/components/shared/StartupTasksModal";
 import { Toaster } from "@/components/ui/Toaster";
+import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
 import { useCreateTask, useTasks } from "@/hooks/useTasks";
 import type { CreateTaskPayload } from "@/types";
 
@@ -52,16 +53,18 @@ function AppShell() {
       <div className="flex flex-col flex-1 min-w-0">
         <Topbar onNewTask={() => setNewTaskOpen(true)} />
         <main className="flex-1 overflow-hidden">
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/tasks" element={<Tasks />} />
-            <Route path="/emails" element={<Emails />} />
-            <Route path="/calendar" element={<Calendar />} />
-            <Route path="/reports" element={<Reports />} />
-            <Route path="/documents" element={<Documents />} />
-            <Route path="/goals" element={<Goals />} />
-            <Route path="/settings" element={<Settings />} />
-          </Routes>
+          <ErrorBoundary>
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/tasks" element={<Tasks />} />
+              <Route path="/emails" element={<Emails />} />
+              <Route path="/calendar" element={<Calendar />} />
+              <Route path="/reports" element={<Reports />} />
+              <Route path="/documents" element={<Documents />} />
+              <Route path="/goals" element={<Goals />} />
+              <Route path="/settings" element={<Settings />} />
+            </Routes>
+          </ErrorBoundary>
         </main>
         <StatusBar />
       </div>

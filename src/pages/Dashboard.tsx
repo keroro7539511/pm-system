@@ -12,6 +12,16 @@ export function Dashboard() {
   const { data: stats } = useTaskStats();
   const { data: projects } = useProjects();
 
+  if (stats !== undefined && stats.total === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full gap-4 text-text-muted">
+        <ListTodo className="h-20 w-20 opacity-20" />
+        <p className="text-lg text-text-secondary">{t("dashboard.empty")}</p>
+        <p className="text-sm text-center max-w-xs">{t("dashboard.emptyDesc")}</p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-5 p-5 overflow-auto h-full">
       <h1 className="text-lg font-semibold text-text-primary">{t("dashboard.title")}</h1>

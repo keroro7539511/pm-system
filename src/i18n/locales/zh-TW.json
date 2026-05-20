@@ -22,7 +22,9 @@
       "statusDist": "任務狀態分佈",
       "projectProgress": "專案進度"
     },
-    "weekCompare": "較上週"
+    "weekCompare": "較上週",
+    "empty": "尚無任何任務",
+    "emptyDesc": "點擊右上角「+」建立第一個任務，開始追蹤你的工作"
   },
   "tasks": {
     "title": "任務管理",
@@ -30,18 +32,24 @@
     "editTask": "編輯任務",
     "deleteTask": "刪除任務",
     "deleteConfirm": "確定要刪除此任務？此操作無法復原。",
+    "deleted": "任務已刪除",
     "listView": "列表",
     "kanbanView": "看板",
     "fields": {
       "title": "任務名稱",
+      "titleRequired": "任務名稱不能為空",
       "description": "說明",
       "project": "專案",
+      "goal": "所屬目標",
       "assignee": "負責人",
       "priority": "優先度",
       "status": "狀態",
       "startDate": "開始日期",
       "dueDate": "結束日期",
-      "tags": "標籤"
+      "tags": "標籤",
+      "noGoal": "— 不指定 —",
+      "noAssignee": "（未指定）",
+      "noEmailWarning": "此員工未填 Email，指派後不會發送通知"
     },
     "priority": {
       "P0": "緊急",
@@ -71,30 +79,98 @@
       "status": "狀態",
       "startDate": "開始日期",
       "endDate": "結束日期",
+      "endBeforeStart": "結束日期不能早於開始日期",
       "description": "說明",
       "descriptionPlaceholder": "專案目標與範疇..."
     },
     "editProject": "編輯專案",
     "deleteProject": "刪除專案",
     "deleteProjectConfirm": "確定要刪除此專案？專案內的任務將變為未分類，此操作無法復原。",
+    "deleted": "專案已刪除",
     "status": {
       "active": "進行中",
       "paused": "暫停",
       "completed": "已完成"
     }
   },
+  "contacts": {
+    "title": "客戶窗口",
+    "new": "新增客戶窗口",
+    "edit": "編輯客戶窗口",
+    "noContacts": "尚無客戶窗口",
+    "noContactsDesc": "點擊「新增」建立第一筆",
+    "selectPrompt": "選擇客戶窗口以查看資料",
+    "orAdd": "或點擊「新增」建立第一筆",
+    "searchPlaceholder": "搜尋姓名、公司...",
+    "deleted": "客戶窗口已刪除",
+    "fields": {
+      "name": "姓名",
+      "nameRequired": "姓名必填",
+      "email": "Email",
+      "emailInvalid": "請輸入有效 Email",
+      "phone": "電話",
+      "company": "公司名稱",
+      "address": "公司地址",
+      "project": "關聯專案",
+      "notes": "備註",
+      "notesPlaceholder": "其他備注..."
+    }
+  },
+  "employees": {
+    "title": "通訊錄",
+    "new": "新增員工",
+    "edit": "編輯員工",
+    "noEmployees": "尚無員工資料",
+    "noEmployeesDesc": "點擊「新增」建立第一筆",
+    "selectPrompt": "選擇員工以查看資料",
+    "orAdd": "或點擊「新增」建立第一筆",
+    "searchPlaceholder": "搜尋姓名、部門...",
+    "deleted": "員工資料已刪除",
+    "fields": {
+      "name": "姓名",
+      "nameRequired": "姓名必填",
+      "email": "Email",
+      "extension": "分機",
+      "department": "部門"
+    }
+  },
   "settings": {
     "title": "設定",
-    "n8n": {
-      "title": "n8n 整合",
-      "webhookUrl": "Webhook URL",
-      "webhookUrlPlaceholder": "http://localhost:5678/webhook/xxx",
-      "localPort": "本機監聽 Port",
-      "hmacSecret": "HMAC Secret",
-      "testConnection": "測試連線",
-      "testing": "測試中...",
-      "testSuccess": "連線成功",
-      "testFailed": "連線失敗"
+    "gmail": {
+      "title": "Gmail 整合",
+      "connected": "已連接：{{email}}",
+      "syncing": "同步中...",
+      "sync": "立即同步",
+      "disconnect": "中斷連接",
+      "connecting": "授權中...",
+      "connect": "連接 Gmail",
+      "autoSyncNote": "連接後每 5 分鐘自動同步收件匣，也可手動觸發",
+      "setupGuide": "前往 console.cloud.google.com → API 和服務 → 憑證 → 建立 OAuth 2.0 用戶端 ID（類型選「桌面應用程式」）"
+    },
+    "emailFilter": {
+      "title": "信件過濾",
+      "myEmail": "我的 Email（寄出去的信不顯示）",
+      "myEmailHelp": "填入後，寄件者為此 Email 的信件會自動忽略",
+      "blockedDomains": "封鎖 Domain（每行一個）",
+      "blockedDomainsHelp": "來自這些 domain 的信件會被丟棄，不進資料庫"
+    },
+    "ai": {
+      "title": "AI 功能",
+      "provider": "AI 服務商",
+      "apiKey": "API Key"
+    },
+    "outlook": {
+      "title": "使用本機 Outlook 寄信",
+      "description": "分派任務時透過 PowerShell 呼叫本機 Outlook 自動寄出通知（僅限 Windows）"
+    },
+    "updates": {
+      "install": "安裝 {{version}}",
+      "checking": "檢查中...",
+      "check": "檢查更新",
+      "upToDate": "已是最新版本",
+      "available": "發現新版本 {{version}}",
+      "downloading": "下載中...",
+      "checkFailed": "檢查失敗，請確認網路連線"
     },
     "notifications": {
       "title": "通知設定",
@@ -163,6 +239,7 @@
     "new": "新增文件",
     "edit": "編輯文件",
     "deleteConfirm": "確定要刪除此文件？",
+    "deleted": "文件已刪除",
     "search": "搜尋文件...",
     "noDocuments": "尚無文件",
     "noDocumentsDesc": "點擊「新增文件」建立第一份文件",
@@ -214,11 +291,21 @@
     "cancel": "取消",
     "confirm": "確認",
     "save": "儲存",
+    "saving": "儲存中...",
     "delete": "刪除",
+    "deleteConfirmBtn": "確認刪除",
     "edit": "編輯",
     "create": "建立",
+    "add": "新增",
     "search": "搜尋",
     "noData": "無資料",
+    "noOption": "— 不指定 —",
+    "exportCsv": "匯出 CSV",
+    "importCsv": "從 CSV 匯入",
+    "csvParseError": "CSV 解析失敗，請確認格式",
+    "csvImportSuccess": "匯入完成：{{ok}} 筆成功",
+    "csvImportPartial": "匯入完成：{{ok}} 筆成功，{{fail}} 筆失敗",
+    "createdAt": "建立於 {{date}}",
     "comingSoon": "功能開發中",
     "comingSoonDesc": "此功能將在 Phase 2 推出，敬請期待！"
   }

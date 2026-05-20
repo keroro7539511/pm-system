@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn, formatDate } from "@/lib/utils";
+import { toast } from "@/stores/toastStore";
 import { DocumentFormDialog } from "./DocumentFormDialog";
 import {
   useDocuments, useCreateDocument, useUpdateDocument, useDeleteDocument,
@@ -107,6 +108,7 @@ export function DocumentsPane() {
       onSuccess: () => {
         if (selectedDoc?.id === id) setSelectedDoc(null);
         setDeleteConfirm(null);
+        toast(t("documents.deleted"), "success");
       },
     });
   }

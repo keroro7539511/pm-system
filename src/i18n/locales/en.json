@@ -22,7 +22,9 @@
       "statusDist": "Task Status Distribution",
       "projectProgress": "Project Progress"
     },
-    "weekCompare": "vs last week"
+    "weekCompare": "vs last week",
+    "empty": "No tasks yet",
+    "emptyDesc": "Click the \"+\" button to create your first task and start tracking work"
   },
   "tasks": {
     "title": "Tasks",
@@ -30,18 +32,24 @@
     "editTask": "Edit Task",
     "deleteTask": "Delete Task",
     "deleteConfirm": "Are you sure you want to delete this task? This action cannot be undone.",
+    "deleted": "Task deleted",
     "listView": "List",
     "kanbanView": "Kanban",
     "fields": {
       "title": "Task Title",
+      "titleRequired": "Task title is required",
       "description": "Description",
       "project": "Project",
+      "goal": "Goal",
       "assignee": "Assignee",
       "priority": "Priority",
       "status": "Status",
       "startDate": "Start Date",
       "dueDate": "End Date",
-      "tags": "Tags"
+      "tags": "Tags",
+      "noGoal": "— None —",
+      "noAssignee": "(Unassigned)",
+      "noEmailWarning": "This employee has no email — no notification will be sent"
     },
     "priority": {
       "P0": "Critical",
@@ -71,30 +79,98 @@
       "status": "Status",
       "startDate": "Start Date",
       "endDate": "End Date",
+      "endBeforeStart": "End date cannot be before start date",
       "description": "Description",
       "descriptionPlaceholder": "Project goals and scope..."
     },
     "editProject": "Edit Project",
     "deleteProject": "Delete Project",
     "deleteProjectConfirm": "Delete this project? Tasks inside will become uncategorized. This cannot be undone.",
+    "deleted": "Project deleted",
     "status": {
       "active": "Active",
       "paused": "Paused",
       "completed": "Completed"
     }
   },
+  "contacts": {
+    "title": "Contacts",
+    "new": "New Contact",
+    "edit": "Edit Contact",
+    "noContacts": "No contacts yet",
+    "noContactsDesc": "Click \"Add\" to create the first one",
+    "selectPrompt": "Select a contact to view details",
+    "orAdd": "or click \"Add\" to create the first one",
+    "searchPlaceholder": "Search name, company...",
+    "deleted": "Contact deleted",
+    "fields": {
+      "name": "Name",
+      "nameRequired": "Name is required",
+      "email": "Email",
+      "emailInvalid": "Please enter a valid email",
+      "phone": "Phone",
+      "company": "Company Name",
+      "address": "Company Address",
+      "project": "Project",
+      "notes": "Notes",
+      "notesPlaceholder": "Additional notes..."
+    }
+  },
+  "employees": {
+    "title": "Directory",
+    "new": "New Employee",
+    "edit": "Edit Employee",
+    "noEmployees": "No employees yet",
+    "noEmployeesDesc": "Click \"Add\" to create the first one",
+    "selectPrompt": "Select an employee to view details",
+    "orAdd": "or click \"Add\" to create the first one",
+    "searchPlaceholder": "Search name, department...",
+    "deleted": "Employee deleted",
+    "fields": {
+      "name": "Name",
+      "nameRequired": "Name is required",
+      "email": "Email",
+      "extension": "Extension",
+      "department": "Department"
+    }
+  },
   "settings": {
     "title": "Settings",
-    "n8n": {
-      "title": "n8n Integration",
-      "webhookUrl": "Webhook URL",
-      "webhookUrlPlaceholder": "http://localhost:5678/webhook/xxx",
-      "localPort": "Local Listen Port",
-      "hmacSecret": "HMAC Secret",
-      "testConnection": "Test Connection",
-      "testing": "Testing...",
-      "testSuccess": "Connection successful",
-      "testFailed": "Connection failed"
+    "gmail": {
+      "title": "Gmail Integration",
+      "connected": "Connected: {{email}}",
+      "syncing": "Syncing...",
+      "sync": "Sync Now",
+      "disconnect": "Disconnect",
+      "connecting": "Authorizing...",
+      "connect": "Connect Gmail",
+      "autoSyncNote": "Auto-syncs every 5 minutes after connecting. You can also sync manually.",
+      "setupGuide": "Go to console.cloud.google.com → APIs & Services → Credentials → Create OAuth 2.0 Client ID (type: Desktop app)"
+    },
+    "emailFilter": {
+      "title": "Email Filters",
+      "myEmail": "My Email (outbound emails are hidden)",
+      "myEmailHelp": "Emails sent from this address will be ignored automatically",
+      "blockedDomains": "Blocked Domains (one per line)",
+      "blockedDomainsHelp": "Emails from these domains will be discarded and not saved"
+    },
+    "ai": {
+      "title": "AI Features",
+      "provider": "AI Provider",
+      "apiKey": "API Key"
+    },
+    "outlook": {
+      "title": "Use Local Outlook",
+      "description": "Send task assignment emails via PowerShell and local Outlook (Windows only)"
+    },
+    "updates": {
+      "install": "Install {{version}}",
+      "checking": "Checking...",
+      "check": "Check for Updates",
+      "upToDate": "Already up to date",
+      "available": "New version available: {{version}}",
+      "downloading": "Downloading...",
+      "checkFailed": "Check failed — please verify your network connection"
     },
     "notifications": {
       "title": "Notifications",
@@ -148,6 +224,7 @@
     "new": "New Document",
     "edit": "Edit Document",
     "deleteConfirm": "Are you sure you want to delete this document?",
+    "deleted": "Document deleted",
     "search": "Search documents...",
     "noDocuments": "No documents yet",
     "noDocumentsDesc": "Click \"New Document\" to create the first one",
@@ -199,11 +276,21 @@
     "cancel": "Cancel",
     "confirm": "Confirm",
     "save": "Save",
+    "saving": "Saving...",
     "delete": "Delete",
+    "deleteConfirmBtn": "Confirm Delete",
     "edit": "Edit",
     "create": "Create",
+    "add": "Add",
     "search": "Search",
     "noData": "No data",
+    "noOption": "— None —",
+    "exportCsv": "Export CSV",
+    "importCsv": "Import CSV",
+    "csvParseError": "CSV parse failed — please check the format",
+    "csvImportSuccess": "Import complete: {{ok}} succeeded",
+    "csvImportPartial": "Import complete: {{ok}} succeeded, {{fail}} failed",
+    "createdAt": "Created {{date}}",
     "comingSoon": "Coming Soon",
     "comingSoonDesc": "This feature will be available in Phase 2. Stay tuned!"
   }

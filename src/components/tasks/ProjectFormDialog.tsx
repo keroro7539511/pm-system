@@ -19,7 +19,10 @@ const schema = z.object({
   start_date: z.string().optional(),
   end_date: z.string().optional(),
   description: z.string().optional(),
-});
+}).refine(
+  (d) => !d.start_date || !d.end_date || d.end_date >= d.start_date,
+  { message: "projects.fields.endBeforeStart", path: ["end_date"] }
+);
 
 type FormValues = z.infer<typeof schema>;
 
@@ -123,7 +126,11 @@ export function ProjectFormDialog({
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="proj-end">{t("projects.fields.endDate")}</Label>
-              <Input id="proj-end" type="date" {...register("end_date")} />
+                <Input id="proj-end" type="date" {...register("end_date")}
+                className={errors.end_date ? "border-danger" : ""} />
+              {errors.end_date && (
+                <p className="text-xs text-danger">{t(errors.end_date.message ?? "projects.fields.endBeforeStart")}</p>
+              )}
             </div>
           </div>
 

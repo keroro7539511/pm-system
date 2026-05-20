@@ -230,8 +230,10 @@ export function Tasks() {
 
   const handleDeleteConfirm = useCallback(() => {
     if (!deletingTask) return;
-    deleteTask.mutate(deletingTask.id, { onSuccess: () => setDeletingTask(undefined) });
-  }, [deletingTask, deleteTask]);
+    deleteTask.mutate(deletingTask.id, {
+      onSuccess: () => { setDeletingTask(undefined); toast(t("tasks.deleted"), "success"); },
+    });
+  }, [deletingTask, deleteTask, t]);
 
   const handleCreateProject = useCallback((data: CreateProjectPayload) => {
     createProject.mutate(data, {
