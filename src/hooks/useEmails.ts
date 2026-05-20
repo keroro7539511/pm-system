@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { listen } from "@tauri-apps/api/event";
 import { api } from "@/lib/tauri";
 import type { UpdateEmailPayload } from "@/types";
+import { CLIENTS_KEY } from "@/hooks/useClients";
 
 export const EMAILS_KEY = ["emails"] as const;
 export const UNREAD_KEY = ["unread-count"] as const;
@@ -40,6 +41,7 @@ export function useMarkEmailRead() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: EMAILS_KEY });
       void qc.invalidateQueries({ queryKey: UNREAD_KEY });
+      void qc.invalidateQueries({ queryKey: CLIENTS_KEY });
     },
   });
 }
@@ -51,6 +53,7 @@ export function useDeleteEmail() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: EMAILS_KEY });
       void qc.invalidateQueries({ queryKey: UNREAD_KEY });
+      void qc.invalidateQueries({ queryKey: CLIENTS_KEY });
     },
   });
 }

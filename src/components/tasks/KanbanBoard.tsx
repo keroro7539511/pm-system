@@ -49,7 +49,20 @@ export function KanbanBoard({ tasks, onEdit, onDelete }: KanbanBoardProps) {
     setOptimistic((prev) => new Map(prev).set(taskId, newStatus));
 
     updateTask.mutate(
-      { id: taskId, payload: { status: newStatus } },
+      {
+        id: taskId,
+        payload: {
+          title:       task.title,
+          description: task.description  ?? undefined,
+          project_id:  task.project_id   ?? undefined,
+          goal_id:     task.goal_id      ?? undefined,
+          assignee:    task.assignee     ?? undefined,
+          priority:    task.priority,
+          start_date:  task.start_date   ?? undefined,
+          due_date:    task.due_date     ?? undefined,
+          status:      newStatus,
+        },
+      },
       {
         onError: () => {
           setOptimistic((prev) => {
