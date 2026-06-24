@@ -147,8 +147,7 @@ pub fn update(pool: &DbPool, id: i64, p: UpdateTaskPayload) -> DbResult<Task> {
            completed_at     = CASE
              WHEN COALESCE(?7, status) = 'done' THEN COALESCE(?13, completed_at, datetime('now'))
              ELSE NULL
-           END,
-           updated_at       = datetime('now')
+           END
          WHERE id = ?14",
         params![
             p.title,

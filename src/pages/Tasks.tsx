@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTasks, useCreateTask, useUpdateTask, useDeleteTask } from "@/hooks/useTasks";
 import { useProjects, useCreateProject, useUpdateProject, useDeleteProject } from "@/hooks/useProjects";
-import type { Task, Project, CreateTaskPayload, CreateProjectPayload, UpdateProjectPayload } from "@/types";
+import type { Task, Project, CreateTaskPayload, UpdateTaskPayload, CreateProjectPayload, UpdateProjectPayload } from "@/types";
 
 const STATUS_DOT: Record<string, string> = {
   active:    "bg-success",
@@ -97,32 +97,33 @@ export function Tasks() {
     });
   }, [tasks, selectedProjectId, searchQuery]);
 
+  // inline 編輯（優先度/狀態/目標）時，帶上任務所有現值，避免未送出的欄位被覆寫成 NULL
+  const buildUpdatePayload = useCallback((task: Task): UpdateTaskPayload => ({
+    title: task.title,
+    description: task.description ?? undefined,
+    project_id: task.project_id ?? undefined,
+    assignee: task.assignee ?? undefined,
+    priority: task.priority,
+    status: task.status,
+    start_date: task.start_date ?? undefined,
+    due_date: task.due_date ?? undefined,
+    goal_id: task.goal_id ?? undefined,
+    estimated_hours: task.estimated_hours ?? undefined,
+    actual_hours: task.actual_hours ?? undefined,
+    tags: task.tags ?? undefined,
+  }), []);
+
   const handleStatusChange = useCallback((task: Task, status: import("@/types").TaskStatus) => {
-    updateTask.mutate({ id: task.id, payload: {
-      title: task.title, description: task.description ?? undefined,
-      project_id: task.project_id ?? undefined, assignee: task.assignee ?? undefined,
-      priority: task.priority, start_date: task.start_date ?? undefined,
-      due_date: task.due_date ?? undefined, status, goal_id: task.goal_id ?? undefined,
-    }});
-  }, [updateTask]);
+    updateTask.mutate({ id: task.id, payload: { ...buildUpdatePayload(task), status } });
+  }, [updateTask, buildUpdatePayload]);
 
   const handleGoalChange = useCallback((task: Task, goalId: number | null) => {
-    updateTask.mutate({ id: task.id, payload: {
-      title: task.title, description: task.description ?? undefined,
-      project_id: task.project_id ?? undefined, assignee: task.assignee ?? undefined,
-      priority: task.priority, start_date: task.start_date ?? undefined,
-      due_date: task.due_date ?? undefined, status: task.status, goal_id: goalId ?? undefined,
-    }});
-  }, [updateTask]);
+    updateTask.mutate({ id: task.id, payload: { ...buildUpdatePayload(task), goal_id: goalId ?? undefined } });
+  }, [updateTask, buildUpdatePayload]);
 
   const handlePriorityChange = useCallback((task: Task, priority: import("@/types").Priority) => {
-    updateTask.mutate({ id: task.id, payload: {
-      title: task.title, description: task.description ?? undefined,
-      project_id: task.project_id ?? undefined, assignee: task.assignee ?? undefined,
-      priority, start_date: task.start_date ?? undefined,
-      due_date: task.due_date ?? undefined, status: task.status, goal_id: task.goal_id ?? undefined,
-    }});
-  }, [updateTask]);
+    updateTask.mutate({ id: task.id, payload: { ...buildUpdatePayload(task), priority } });
+  }, [updateTask, buildUpdatePayload]);
 
   const handleEdit = useCallback((task: Task) => {
     setEditingTask(task);
@@ -216,6 +217,11 @@ export function Tasks() {
   }, [deletingProject, deleteProject, selectedProjectId]);
 
   const selectedProject = projects.find((p) => p.id === selectedProjectId);
+
+  const projectNames = useMemo(
+    () => Object.fromEntries(projects.map((p) => [p.id, p.name])),
+    [projects],
+  );
 
   return (
     <div className="flex h-full overflow-hidden">
@@ -394,7 +400,7 @@ export function Tasks() {
             ) : (
               <>
                 <TabsContent value="list" className="flex-1 overflow-auto min-h-0 mt-3">
-                  <TaskList tasks={filteredTasks} onEdit={handleEdit} onDelete={setDeletingTask} onStatusChange={handleStatusChange} onGoalChange={handleGoalChange} onPriorityChange={handlePriorityChange} />
+                  <TaskList tasks={filteredTasks} onEdit={handleEdit} onDelete={setDeletingTask} onStatusChange={handleStatusChange} onGoalChange={handleGoalChange} onPriorityChange={handlePriorityChange} showProject={selectedProjectId === null} projectNames={projectNames} />
                 </TabsContent>
                 <TabsContent value="kanban" className="flex-1 overflow-hidden min-h-0 mt-3">
                   <KanbanBoard tasks={filteredTasks} onEdit={handleEdit} onDelete={setDeletingTask} />

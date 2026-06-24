@@ -17,9 +17,12 @@ interface TaskListProps {
   onStatusChange: (task: Task, status: TaskStatus) => void;
   onGoalChange: (task: Task, goalId: number | null) => void;
   onPriorityChange: (task: Task, priority: Priority) => void;
+  // 選擇「全部專案」時顯示專案名稱欄位
+  showProject?: boolean;
+  projectNames?: Record<number, string>;
 }
 
-export function TaskList({ tasks, onEdit, onDelete, onStatusChange, onGoalChange, onPriorityChange }: TaskListProps) {
+export function TaskList({ tasks, onEdit, onDelete, onStatusChange, onGoalChange, onPriorityChange, showProject = false, projectNames = {} }: TaskListProps) {
   const { t, i18n } = useTranslation();
   const { data: goals = [] } = useAllGoals();
 
@@ -33,6 +36,7 @@ export function TaskList({ tasks, onEdit, onDelete, onStatusChange, onGoalChange
         <thead>
           <tr className="border-b border-border text-[11px] text-text-muted">
             <th className="pb-2 text-left font-medium pl-2 w-6"></th>
+            {showProject && <th className="pb-2 text-left font-medium w-32">{t("tasks.fields.project")}</th>}
             <th className="pb-2 text-left font-medium">{t("tasks.fields.title")}</th>
             <th className="pb-2 text-left font-medium w-20">{t("tasks.fields.priority")}</th>
             <th className="pb-2 text-left font-medium w-28">{t("tasks.fields.status")}</th>
@@ -51,6 +55,17 @@ export function TaskList({ tasks, onEdit, onDelete, onStatusChange, onGoalChange
                 className={cn("group hover:bg-layer-1 transition-colors", overdue && "bg-danger/5")}
               >
                 <td className="py-2 pl-2"></td>
+                {showProject && (
+                  <td className="py-2 pr-3 min-w-0 overflow-hidden">
+                    {task.project_id != null && projectNames[task.project_id] ? (
+                      <span className="text-xs text-text-secondary truncate block">
+                        {projectNames[task.project_id]}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-text-muted">—</span>
+                    )}
+                  </td>
+                )}
                 <td className="py-2 pr-4 min-w-0 overflow-hidden">
                   <p className={cn("font-medium text-text-primary truncate", overdue && "text-danger/90")}>
                     {task.title}

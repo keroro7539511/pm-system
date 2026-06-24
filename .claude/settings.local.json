@@ -101,7 +101,26 @@
       "Bash(ps -eo pid,rss,pcpu,comm -r)",
       "Bash(sort -k2 -rn)",
       "Bash(awk '{printf \"PID:%-7s MEM:%-8s CPU:%-6s %s\\\\n\", $1, int\\($2/1024\\)\"MB\", $3\"%\", $4}')",
-      "Bash(echo \"PID: $!\")"
+      "Bash(echo \"PID: $!\")",
+      "Bash(cargo tree *)",
+      "Bash(cargo search *)",
+      "Bash(cargo audit *)",
+      "Bash(cargo install *)",
+      "Bash(cargo update *)",
+      "Bash(~/.cargo/bin/cargo-audit audit *)",
+      "Bash(jobs -l)",
+      "Skill(run)",
+      "Bash(grep -qE 'Running `target|Finished|error\\\\[|error:' /private/tmp/claude-501/-Users-yang-PM-System/45e529d6-a6ac-4a4e-abf4-8ac8fa944bb6/tasks/bg7ljx0xk.output)",
+      "Bash(echo \"exit=$?\")",
+      "Bash(grep -iA0 \"task\")",
+      "Bash(sed -n '/CREATE TABLE.*tasks/,/\\);/p' sql/001_init.sql)",
+      "Bash(cat sql/006_task_goal_link.sql sql/007_goal_global.sql)",
+      "Read(//Users/yang/.npm/_npx/e41f203b7505f1fb/**)",
+      "Bash(PLAYWRIGHT_BROWSERS_PATH=/Users/yang/Library/Caches/ms-playwright node node_modules/playwright/cli.js install webkit)",
+      "Bash(sqlite3 '/Users/yang/Library/Application Support/com.pmsystem.app/data.db' 'SELECT name FROM pragma_table_info\\('\\\\''tasks'\\\\''\\);')",
+      "Bash(sqlite3 '/Users/yang/Library/Application Support/com.pmsystem.app/data.db' 'BEGIN; *)",
+      "Bash(sqlite3 $DB *)",
+      "Bash(cargo build *)"
     ]
   }
 }
